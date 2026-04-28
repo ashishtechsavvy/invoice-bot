@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice Bot — Multi AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root {
+  --bg: #09090b;
+  --s1: #111113;
+  --s2: #18181b;
+  --s3: #1f1f23;
+  --b1: #27272a;
+  --b2: #3f3f46;
+  --b3: #52525b;
+  --text: #fafafa;
+  --t2: #a1a1aa;
+  --t3: #52525b;
+  --green: #22c55e;
+  --green-d: #16a34a;
+  --green-g: rgba(34,197,94,.1);
+  --red: #f87171;
+  --red-g: rgba(248,113,113,.1);
+  --amber: #fbbf24;
+  --amber-g: rgba(251,191,36,.08);
+  --blue: #60a5fa;
+  --blue-g: rgba(96,165,250,.1);
+  --mono: 'Geist Mono', monospace;
+  --sans: 'Geist', sans-serif;
+  --r: 10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
+
+/* TOPBAR */
+.topbar{height:54px;background:var(--s1);border-bottom:1px solid var(--b1);display:flex;align-items:center;padding:0 18px;gap:12px;position:sticky;top:0;z-index:100}
+.t-logo{width:30px;height:30px;background:linear-gradient(135deg,#6366f1,#22c55e);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.t-title{font-size:14px;font-weight:700;letter-spacing:-.03em}
+.t-sep{width:1px;height:18px;background:var(--b1);margin:0 4px}
+
+/* AI switcher in topbar */
+.ai-tabs{display:flex;gap:2px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:3px}
+.ai-tab{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--t2);transition:all .15s;white-space:nowrap;font-family:var(--sans)}
+.ai-tab:hover{color:var(--text)}
+.ai-tab.active{color:#fff}
+.ai-tab.active.claude{background:#d4a72c;color:#1a1000}
+.ai-tab.active.openai{background:#10a37f;color:#fff}
+.ai-tab.active.gemini{background:#4285f4;color:#fff}
+.ai-tab .dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.6}
+.ai-tab.configured .dot{opacity:1;box-shadow:0 0 5px currentColor}
+
+.t-pills{display:flex;gap:6px;margin-left:4px}
+.pill{display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:10px;font-family:var(--mono);border:1px solid var(--b1);color:var(--t3);transition:all .2s}
+.pill .d{width:5px;height:5px;border-radius:50%;background:var(--t3)}
+.pill.ok{border-color:var(--green-d);color:var(--green);background:var(--green-g)}
+.pill.ok .d{background:var(--green);box-shadow:0 0 5px var(--green)}
+.pill.warn{border-color:#b45309;color:var(--amber);background:var(--amber-g)}
+.pill.warn .d{background:var(--amber)}
+
+.t-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.steps{display:flex;align-items:center;gap:3px;font-size:10px;font-family:var(--mono)}
+.st{padding:3px 8px;border-radius:20px;border:1px solid var(--b1);color:var(--t3)}
+.st.active{border-color:#6366f1;color:#818cf8;background:rgba(99,102,241,.1)}
+.st.done{background:var(--green);border-color:var(--green);color:#fff}
+.st-sep{color:var(--t3)}
+
+.btn-cfg{display:flex;align-items:center;gap:5px;padding:6px 12px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;color:var(--t2);font-family:var(--sans);font-size:11px;font-weight:500;cursor:pointer;transition:all .15s}
+.btn-cfg:hover{color:var(--text);border-color:var(--b2)}
+.btn-cfg svg{width:13px;height:13px}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:390px 1fr;min-height:calc(100vh - 54px)}
+
+/* LEFT */
+.left{padding:18px;border-right:1px solid var(--b1);display:flex;flex-direction:column;gap:14px}
+.slabel{font-size:10px;font-family:var(--mono);color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
+
+/* AI Status banner */
+.ai-banner{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid var(--b1);background:var(--s2);font-size:12px;transition:all .2s}
+.ai-banner.ok{border-color:var(--green-d);background:var(--green-g)}
+.ai-banner.warn{border-color:#b45309;background:var(--amber-g)}
+.ai-banner.err{border-color:#7f1d1d;background:var(--red-g)}
+.ai-banner-icon{font-size:18px;flex-shrink:0}
+.ai-banner-text b{display:block;font-size:11px;font-weight:600;margin-bottom:1px}
+.ai-banner-text span{font-size:11px;color:var(--t2)}
+.ai-banner-action{margin-left:auto;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:none;font-family:var(--sans);white-space:nowrap}
+.ai-banner-action.setup{background:#6366f1;color:#fff}
+.ai-banner-action.switch{background:var(--s3);border:1px solid var(--b2);color:var(--t2)}
+
+/* Upload */
+.upload-zone{border:1.5px dashed var(--b2);border-radius:var(--r);padding:24px 20px;text-align:center;cursor:pointer;transition:all .2s}
+.upload-zone:hover,.upload-zone.drag{border-color:#6366f1;background:rgba(99,102,241,.05)}
+.upload-zone input{display:none}
+.uz-icon{font-size:26px;margin-bottom:7px}
+.upload-zone h3{font-size:13px;font-weight:600;margin-bottom:2px}
+.upload-zone p{font-size:11px;color:var(--t2)}
+
+.file-card{display:none;background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);padding:11px 13px;align-items:center;gap:9px}
+.file-card.show{display:flex}
+.f-ic{width:34px;height:34px;background:rgba(99,102,241,.15);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.f-nm{font-size:12px;font-weight:500;word-break:break-all}
+.f-sz{font-size:10px;color:var(--t2);margin-top:2px;font-family:var(--mono)}
+.btn-rm{margin-left:auto;background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;padding:2px 5px;flex-shrink:0}
+.btn-rm:hover{color:var(--red)}
+.img-prev{display:none;width:100%;border-radius:8px;border:1px solid var(--b1);max-height:160px;object-fit:contain;background:var(--s2)}
+.img-prev.show{display:block}
+
+.divider{display:flex;align-items:center;gap:8px}
+.dline{flex:1;height:1px;background:var(--b1)}
+.dtext{font-size:10px;color:var(--t3);font-family:var(--mono)}
+
+.btn-sample{width:100%;padding:9px 13px;background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);color:var(--t2);font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;text-align:left;display:flex;align-items:center;gap:7px}
+.btn-sample:hover{border-color:#6366f1;color:#818cf8}
+
+.alert{padding:9px 11px;border-radius:8px;font-size:11px;line-height:1.5;display:none}
+.alert.show{display:block}
+.alert.err{background:var(--red-g);border:1px solid rgba(248,113,113,.25);color:var(--red)}
+.alert.warn{background:var(--amber-g);border:1px solid rgba(251,191,36,.25);color:var(--amber)}
+.alert.ok{background:var(--green-g);border:1px solid rgba(34,197,94,.25);color:var(--green)}
+
+/* Main button */
+.btn-main{width:100%;padding:12px;border:none;border-radius:var(--r);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:7px;letter-spacing:-.01em}
+.btn-main:disabled{opacity:.4;cursor:not-allowed}
+.btn-main.claude-btn{background:#d4a72c;color:#1a1000}
+.btn-main.claude-btn:hover:not(:disabled){background:#c49928}
+.btn-main.openai-btn{background:#10a37f;color:#fff}
+.btn-main.openai-btn:hover:not(:disabled){background:#0d8a6b}
+.btn-main.gemini-btn{background:#4285f4;color:#fff}
+.btn-main.gemini-btn:hover:not(:disabled){background:#2b6cb0}
+
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+.spinner.dark{border-color:rgba(0,0,0,.2);border-top-color:rgba(0,0,0,.7)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* RIGHT */
+.right{padding:18px;display:flex;flex-direction:column;gap:14px;overflow-y:auto}
+.right-header{display:flex;align-items:center;gap:10px;padding-bottom:13px;border-bottom:1px solid var(--b1)}
+.r-title{font-size:14px;font-weight:600}
+.r-sub{font-size:10px;color:var(--t2);margin-top:1px;font-family:var(--mono)}
+
+.fields-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.fcard{background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:11px 13px;transition:border-color .2s}
+.fcard.hi{border-color:var(--green-d);background:rgba(34,197,94,.04)}
+.fcard.wide{grid-column:span 2}
+.fkey{font-size:10px;font-family:var(--mono);color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.fval{font-size:13px;font-weight:500}
+.fval.amount{color:var(--green);font-family:var(--mono);font-size:16px;font-weight:700}
+.fval.paid{color:var(--green)}
+.fval.unpaid{color:var(--amber)}
+.fval.empty{color:var(--t3);font-style:italic;font-weight:400;font-size:12px}
+
+.table-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);overflow:hidden}
+.tc-head{padding:9px 13px;border-bottom:1px solid var(--b1);font-size:12px;font-weight:600;display:flex;align-items:center;gap:7px}
+.cnt{font-family:var(--mono);font-size:10px;padding:1px 6px;background:var(--s2);border-radius:20px;color:var(--t2)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{padding:6px 13px;text-align:left;font-family:var(--mono);font-size:10px;color:var(--t3);letter-spacing:.05em;text-transform:uppercase;background:var(--s2);border-bottom:1px solid var(--b1)}
+tbody td{padding:8px 13px;border-bottom:1px solid var(--b1);color:var(--t2)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--s2);color:var(--text)}
+.td-r{text-align:right;font-family:var(--mono);color:var(--text)!important}
+
+.sheet-preview{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);overflow:hidden}
+.sp-head{padding:9px 13px;border-bottom:1px solid var(--b1);font-size:12px;font-weight:600;display:flex;align-items:center;gap:7px}
+.new-badge{font-size:10px;font-family:var(--mono);padding:1px 7px;background:var(--green-g);color:var(--green);border:1px solid var(--green-d);border-radius:20px}
+.scroll{overflow-x:auto}
+.sh-heads{display:flex;border-bottom:1px solid var(--b1)}
+.sh{padding:6px 11px;font-size:10px;font-family:var(--mono);color:var(--t3);background:var(--s2);border-right:1px solid var(--b1);white-space:nowrap;min-width:100px;flex-shrink:0;letter-spacing:.03em}
+.sh:first-child{background:rgba(34,197,94,.08);color:var(--green)}
+.sh-row{display:flex}
+.sc{padding:8px 11px;font-size:11px;font-family:var(--mono);border-right:1px solid var(--b1);white-space:nowrap;min-width:100px;flex-shrink:0;color:var(--green);background:rgba(34,197,94,.03)}
+
+/* AI used tag */
+.ai-used-tag{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:20px;font-size:10px;font-family:var(--mono);font-weight:500}
+.ai-used-tag.claude{background:rgba(212,167,44,.15);color:#d4a72c;border:1px solid rgba(212,167,44,.3)}
+.ai-used-tag.openai{background:rgba(16,163,127,.15);color:#10a37f;border:1px solid rgba(16,163,127,.3)}
+.ai-used-tag.gemini{background:rgba(66,133,244,.15);color:#60a5fa;border:1px solid rgba(66,133,244,.3)}
+
+.action-row{display:flex;gap:7px}
+.btn-sec{flex:1;padding:9px;background:var(--s1);border:1px solid var(--b1);border-radius:8px;color:var(--t2);font-family:var(--sans);font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:5px}
+.btn-sec:hover{border-color:var(--b2);color:var(--text)}
+.btn-sec.green-btn:hover{border-color:var(--green-d);color:var(--green)}
+
+.empty{text-align:center;padding:50px 20px}
+.e-ic{font-size:36px;margin-bottom:12px;opacity:.3}
+.empty h3{font-size:14px;font-weight:600;color:var(--t2);margin-bottom:5px}
+.empty p{font-size:12px;color:var(--t3);line-height:1.7}
+
+/* ═══════════════ SETTINGS OVERLAY ═══════════════ */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:none;align-items:flex-start;justify-content:flex-end}
+.overlay.open{display:flex}
+.sp{width:500px;height:100vh;background:var(--s1);border-left:1px solid var(--b1);display:flex;flex-direction:column;animation:sIn .2s ease;overflow:hidden}
+@keyframes sIn{from{transform:translateX(30px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+.sp-top{padding:16px 18px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--s1);z-index:5;flex-shrink:0}
+.sp-top-title{font-size:14px;font-weight:700}
+.sp-close{margin-left:auto;background:none;border:none;color:var(--t2);font-size:18px;cursor:pointer;padding:2px 6px;border-radius:4px}
+.sp-close:hover{color:var(--text);background:var(--s2)}
+
+/* Provider tabs inside settings */
+.sp-tabs{display:flex;gap:2px;padding:12px 18px 0;border-bottom:1px solid var(--b1);flex-shrink:0;background:var(--s1)}
+.sp-tab{padding:7px 14px;border-radius:8px 8px 0 0;font-size:12px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--t2);transition:all .15s;display:flex;align-items:center;gap:6px;font-family:var(--sans);border:1px solid transparent;border-bottom:none;margin-bottom:-1px}
+.sp-tab:hover{color:var(--text)}
+.sp-tab.active{background:var(--s2);border-color:var(--b1);color:var(--text)}
+.sp-tab .tdot{width:6px;height:6px;border-radius:50%;background:var(--t3)}
+.sp-tab.cfg .tdot.claude{background:#d4a72c;box-shadow:0 0 5px #d4a72c}
+.sp-tab.cfg .tdot.openai{background:#10a37f;box-shadow:0 0 5px #10a37f}
+.sp-tab.cfg .tdot.gemini{background:#4285f4;box-shadow:0 0 5px #4285f4}
+.sp-tab.cfg .tdot.sheets{background:var(--green);box-shadow:0 0 5px var(--green)}
+
+.sp-body{flex:1;overflow-y:auto;padding:0}
+.sp-section{padding:18px;display:flex;flex-direction:column;gap:14px;border-bottom:1px solid var(--b1)}
+.sp-section:last-child{border-bottom:none}
+
+.provider-header{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--r);border:1px solid var(--b1);background:var(--s2)}
+.provider-logo{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.provider-logo.claude{background:rgba(212,167,44,.2)}
+.provider-logo.openai{background:rgba(16,163,127,.2)}
+.provider-logo.gemini{background:rgba(66,133,244,.2)}
+.provider-name{font-size:13px;font-weight:600}
+.provider-sub{font-size:11px;color:var(--t2);margin-top:1px}
+.provider-status{margin-left:auto;font-size:10px;font-family:var(--mono);padding:3px 8px;border-radius:20px;border:1px solid var(--b2);color:var(--t3)}
+.provider-status.ok{background:var(--green-g);border-color:var(--green-d);color:var(--green)}
+
+.fg{display:flex;flex-direction:column;gap:5px}
+.flabel{font-size:11px;font-family:var(--mono);color:var(--t2);letter-spacing:.04em;display:flex;align-items:center;gap:5px}
+.fhint{font-size:11px;color:var(--t3);line-height:1.5}
+.fhint a{color:#818cf8;text-decoration:none}
+.fhint a:hover{text-decoration:underline}
+
+.inp{width:100%;background:var(--s2);border:1px solid var(--b1);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:12px;padding:9px 11px;outline:none;transition:border-color .15s}
+.inp:focus{border-color:#6366f1}
+.inp.ok{border-color:var(--green-d)}
+.inp.bad{border-color:var(--red)}
+.inp::placeholder{color:var(--t3)}
+select.inp{cursor:pointer}
+textarea.inp{resize:vertical;line-height:1.5}
+
+.inp-row{display:flex;gap:7px}
+.inp-row .inp{flex:1}
+
+.btn-sp{padding:8px 14px;border-radius:8px;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px;white-space:nowrap;border:none}
+.btn-sp.primary{background:#6366f1;color:#fff}
+.btn-sp.primary:hover{background:#4f46e5}
+.btn-sp.secondary{background:var(--s2);border:1px solid var(--b1);color:var(--t2)}
+.btn-sp.secondary:hover{border-color:var(--b2);color:var(--text)}
+.btn-sp.google-btn{background:#fff;color:#1f2937;border:1px solid #d1d5db}
+.btn-sp.google-btn:hover{background:#f9fafb}
+.btn-sp.danger{background:var(--red-g);border:1px solid rgba(248,113,113,.25);color:var(--red)}
+.btn-sp:disabled{opacity:.45;cursor:not-allowed}
+
+.model-cards{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.model-card{padding:10px 12px;border:1.5px solid var(--b1);border-radius:8px;cursor:pointer;transition:all .15s;position:relative}
+.model-card:hover{border-color:var(--b2)}
+.model-card.sel{border-color:currentColor}
+.model-card.sel.claude-m{border-color:#d4a72c;background:rgba(212,167,44,.06)}
+.model-card.sel.openai-m{border-color:#10a37f;background:rgba(16,163,127,.06)}
+.model-card.sel.gemini-m{border-color:#4285f4;background:rgba(66,133,244,.06)}
+.mc-name{font-size:12px;font-weight:600;margin-bottom:2px}
+.mc-sub{font-size:10px;color:var(--t2)}
+.mc-badge{position:absolute;top:7px;right:7px;font-size:9px;padding:1px 5px;border-radius:20px;font-family:var(--mono)}
+.mc-badge.best{background:var(--green-g);color:var(--green);border:1px solid var(--green-d)}
+.mc-badge.fast{background:rgba(96,165,250,.15);color:var(--blue);border:1px solid rgba(96,165,250,.3)}
+.mc-badge.smart{background:rgba(167,139,250,.15);color:#a78bfa;border:1px solid rgba(167,139,250,.3)}
+
+.status-row{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--t2)}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--t3);flex-shrink:0}
+.sdot.ok{background:var(--green);box-shadow:0 0 5px var(--green)}
+.sdot.err{background:var(--red)}
+.sdot.warn{background:var(--amber)}
+
+.info-box{background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:11px;font-size:11px;color:var(--t2);line-height:1.6}
+.info-box strong{color:var(--text)}
+.info-box code{background:var(--s3);padding:1px 4px;border-radius:3px;font-family:var(--mono);color:#818cf8;font-size:10px}
+.info-box ol{padding-left:14px;margin-top:5px}
+.info-box li{margin-bottom:3px}
+
+.test-result{padding:8px 10px;border-radius:7px;font-size:11px;display:none;margin-top:2px}
+.test-result.show{display:block}
+.test-result.ok{background:var(--green-g);border:1px solid rgba(34,197,94,.25);color:var(--green)}
+.test-result.err{background:var(--red-g);border:1px solid rgba(248,113,113,.25);color:var(--red)}
+
+.sp-save{padding:13px 18px;border-top:1px solid var(--b1);display:flex;gap:7px;flex-shrink:0;background:var(--s1)}
+
+.option-row{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--t2)}
+.option-row input[type=checkbox]{width:15px;height:15px;accent-color:var(--green)}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;padding:10px 14px;border-radius:9px;font-size:12px;font-weight:500;z-index:999;transform:translateY(16px);opacity:0;transition:all .25s;display:flex;align-items:center;gap:6px;max-width:320px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{background:var(--green-g);border:1px solid var(--green-d);color:var(--green)}
+.toast.err{background:var(--red-g);border:1px solid rgba(248,113,113,.3);color:var(--red)}
+
+/* Hidden panels */
+.tab-panel{display:none}
+.tab-panel.show{display:flex;flex-direction:column;gap:14px}
+</style>
+</head>
+<body>
+
+<!-- ─── TOPBAR ─── -->
+<div class="topbar">
+  <div class="t-logo">📄</div>
+  <span class="t-title">Invoice Bot</span>
+  <div class="t-sep"></div>
+
+  <!-- AI switcher -->
+  <div class="ai-tabs" id="aiTabs">
+    <button class="ai-tab claude" id="tabClaude" onclick="switchAI('claude')">
+      <span class="dot"></span> Claude
+    </button>
+    <button class="ai-tab openai" id="tabOpenAI" onclick="switchAI('openai')">
+      <span class="dot"></span> GPT
+    </button>
+    <button class="ai-tab gemini" id="tabGemini" onclick="switchAI('gemini')">
+      <span class="dot"></span> Gemini
+    </button>
+  </div>
+
+  <div class="t-pills">
+    <span class="pill" id="pillAI"><span class="d"></span><span id="pillAITxt">No AI key</span></span>
+    <span class="pill" id="pillSheets"><span class="d"></span><span id="pillSheetsTxt">Sheets</span></span>
+  </div>
+
+  <div class="t-right">
+    <div class="steps">
+      <span class="st active" id="st1">1 Upload</span>
+      <span class="st-sep">›</span>
+      <span class="st" id="st2">2 Extract</span>
+      <span class="st-sep">›</span>
+      <span class="st" id="st3">3 Sheets</span>
+    </div>
+    <button class="btn-cfg" onclick="openSettings()">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947z"/><circle cx="10" cy="10" r="3"/></svg>
+      Settings
+    </button>
+  </div>
+</div>
+
+<!-- ─── MAIN LAYOUT ─── -->
+<div class="layout">
+
+  <!-- LEFT -->
+  <div class="left">
+
+    <!-- AI Banner -->
+    <div class="ai-banner warn" id="aiBanner">
+      <span class="ai-banner-icon" id="aiBannerIcon">⚠️</span>
+      <div class="ai-banner-text">
+        <b id="aiBannerTitle">No API key configured</b>
+        <span id="aiBannerSub">Add a key in Settings to start extracting</span>
+      </div>
+      <button class="ai-banner-action setup" onclick="openSettings()">Setup</button>
+    </div>
+
+    <div>
+      <div class="slabel">Upload invoice</div>
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fInp').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave()" ondrop="onDrop(event)">
+        <input type="file" id="fInp" accept="image/*,.pdf" onchange="handleFile(this.files[0])">
+        <div class="uz-icon">📋</div>
+        <h3>Drop invoice here</h3>
+        <p>PDF · JPG · PNG · any format</p>
+      </div>
+      <div class="file-card" id="fCard">
+        <div class="f-ic" id="fIc">📄</div>
+        <div><div class="f-nm" id="fNm">—</div><div class="f-sz" id="fSz">—</div></div>
+        <button class="btn-rm" onclick="clearFile()">✕</button>
+      </div>
+      <img class="img-prev" id="iPrev" alt="Preview">
+    </div>
+
+    <div class="divider"><div class="dline"></div><span class="dtext">OR</span><div class="dline"></div></div>
+
+    <div>
+      <div class="slabel">No invoice? Try the demo</div>
+      <button class="btn-sample" onclick="loadSample()">📋 Use built-in sample invoice</button>
+    </div>
+
+    <div class="alert err" id="aErr"></div>
+    <div class="alert warn" id="aWarn"></div>
+
+    <button class="btn-main claude-btn" id="btnMain" onclick="runExtract()" disabled>
+      <span id="btnLbl">Extract & send to Google Sheets</span>
+    </button>
+
+    <div style="font-size:10px;color:var(--t3);text-align:center">⌘+Enter to extract · Switch AI provider above</div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right" id="rightPanel">
+    <div class="right-header">
+      <svg width="24" height="24" viewBox="0 0 48 48"><path fill="#43A047" d="M37,45H11c-1.657,0-3-1.343-3-3V6c0-1.657,1.343-3,3-3h19l10,10v29C40,43.657,38.657,45,37,45z"/><path fill="#C8E6C9" d="M40,13H30V3L40,13z"/><path fill="#2E7D32" d="M30,3l10,10h-10V3z"/><path fill="#fff" d="M15,24h18v2H15V24z M15,28h18v2H15V28z M15,32h11v2H15V32z M15,20h18v2H15V20z"/></svg>
+      <div><div class="r-title">Transactions — Sheet1</div><div class="r-sub" id="rSub">0 rows · waiting for invoice</div></div>
+    </div>
+    <div id="mainOut">
+      <div class="empty">
+        <div class="e-ic">📤</div>
+        <h3>No invoice processed yet</h3>
+        <p>Upload an invoice or try the sample.<br>Switch AI provider in the top bar.<br>Click <strong style="color:var(--t2)">Settings ⚙</strong> to add API keys &amp; connect Google Sheets.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SETTINGS OVERLAY ─── -->
+<div class="overlay" id="overlay" onclick="closeBg(event)">
+  <div class="sp">
+    <div class="sp-top">
+      <span style="font-size:16px">⚙</span>
+      <span class="sp-top-title">Settings &amp; Connections</span>
+      <button class="sp-close" onclick="closeSettings()">✕</button>
+    </div>
+
+    <!-- provider tabs -->
+    <div class="sp-tabs">
+      <button class="sp-tab active" id="spTabClaude" onclick="switchSpTab('claude')">
+        <span class="tdot claude"></span> Claude
+      </button>
+      <button class="sp-tab" id="spTabOpenAI" onclick="switchSpTab('openai')">
+        <span class="tdot openai"></span> GPT (OpenAI)
+      </button>
+      <button class="sp-tab" id="spTabGemini" onclick="switchSpTab('gemini')">
+        <span class="tdot gemini"></span> Gemini
+      </button>
+      <button class="sp-tab" id="spTabSheets" onclick="switchSpTab('sheets')">
+        <span class="tdot sheets"></span> Google Sheets
+      </button>
+      <button class="sp-tab" id="spTabOpts" onclick="switchSpTab('opts')">Options</button>
+    </div>
+
+    <div class="sp-body" id="spBody">
+
+      <!-- ── CLAUDE ── -->
+      <div class="tab-panel show" id="panelClaude">
+        <div class="sp-section">
+          <div class="provider-header">
+            <div class="provider-logo claude">🟡</div>
+            <div><div class="provider-name">Anthropic Claude</div><div class="provider-sub">claude-sonnet-4, claude-opus-4, claude-haiku-4.5</div></div>
+            <span class="provider-status" id="claudeStatus">Not configured</span>
+          </div>
+          <div class="fg">
+            <label class="flabel">API Key</label>
+            <div class="inp-row">
+              <input class="inp" id="iClaudeKey" type="password" placeholder="sk-ant-api03-..." oninput="refreshStatuses()">
+              <button class="btn-sp secondary" onclick="toggleVis('iClaudeKey',this)">Show</button>
+            </div>
+            <span class="fhint">Get key from <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a></span>
+          </div>
+          <div>
+            <div class="slabel" style="margin-bottom:9px">Choose model</div>
+            <div class="model-cards">
+              <div class="model-card claude-m" id="mc-claude-sonnet" onclick="selModel('claude','claude-sonnet-4-20250514')">
+                <div class="mc-name">Claude Sonnet 4</div>
+                <div class="mc-sub">Best balance of speed &amp; accuracy</div>
+                <span class="mc-badge best">Recommended</span>
+              </div>
+              <div class="model-card claude-m" id="mc-claude-opus" onclick="selModel('claude','claude-opus-4-20250514')">
+                <div class="mc-name">Claude Opus 4</div>
+                <div class="mc-sub">Most accurate, complex invoices</div>
+                <span class="mc-badge smart">Smartest</span>
+              </div>
+              <div class="model-card claude-m" id="mc-claude-haiku" onclick="selModel('claude','claude-haiku-4-5-20251001')">
+                <div class="mc-name">Claude Haiku 4.5</div>
+                <div class="mc-sub">Fastest, lowest cost</div>
+                <span class="mc-badge fast">Fastest</span>
+              </div>
+            </div>
+          </div>
+          <button class="btn-sp primary" onclick="testConn('claude')">Test Claude connection</button>
+          <div class="test-result" id="tr-claude"></div>
+        </div>
+      </div>
+
+      <!-- ── OPENAI ── -->
+      <div class="tab-panel" id="panelOpenAI">
+        <div class="sp-section">
+          <div class="provider-header">
+            <div class="provider-logo openai">🟢</div>
+            <div><div class="provider-name">OpenAI (ChatGPT)</div><div class="provider-sub">gpt-4o, gpt-4o-mini, gpt-4-turbo</div></div>
+            <span class="provider-status" id="openaiStatus">Not configured</span>
+          </div>
+          <div class="fg">
+            <label class="flabel">API Key</label>
+            <div class="inp-row">
+              <input class="inp" id="iOpenAIKey" type="password" placeholder="sk-proj-..." oninput="refreshStatuses()">
+              <button class="btn-sp secondary" onclick="toggleVis('iOpenAIKey',this)">Show</button>
+            </div>
+            <span class="fhint">Get key from <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a></span>
+          </div>
+          <div>
+            <div class="slabel" style="margin-bottom:9px">Choose model</div>
+            <div class="model-cards">
+              <div class="model-card openai-m" id="mc-openai-gpt4o" onclick="selModel('openai','gpt-4o')">
+                <div class="mc-name">GPT-4o</div>
+                <div class="mc-sub">Best — vision + text</div>
+                <span class="mc-badge best">Recommended</span>
+              </div>
+              <div class="model-card openai-m" id="mc-openai-gpt4omini" onclick="selModel('openai','gpt-4o-mini')">
+                <div class="mc-name">GPT-4o mini</div>
+                <div class="mc-sub">Cheapest, still smart</div>
+                <span class="mc-badge fast">Cheapest</span>
+              </div>
+              <div class="model-card openai-m" id="mc-openai-gpt4t" onclick="selModel('openai','gpt-4-turbo')">
+                <div class="mc-name">GPT-4 Turbo</div>
+                <div class="mc-sub">High accuracy, larger context</div>
+                <span class="mc-badge smart">Powerful</span>
+              </div>
+            </div>
+          </div>
+          <button class="btn-sp primary" onclick="testConn('openai')">Test OpenAI connection</button>
+          <div class="test-result" id="tr-openai"></div>
+        </div>
+      </div>
+
+      <!-- ── GEMINI ── -->
+      <div class="tab-panel" id="panelGemini">
+        <div class="sp-section">
+          <div class="provider-header">
+            <div class="provider-logo gemini">🔵</div>
+            <div><div class="provider-name">Google Gemini</div><div class="provider-sub">gemini-2.0-flash, gemini-1.5-pro, gemini-1.5-flash</div></div>
+            <span class="provider-status" id="geminiStatus">Not configured</span>
+          </div>
+          <div class="fg">
+            <label class="flabel">API Key</label>
+            <div class="inp-row">
+              <input class="inp" id="iGeminiKey" type="password" placeholder="AIzaSy..." oninput="refreshStatuses()">
+              <button class="btn-sp secondary" onclick="toggleVis('iGeminiKey',this)">Show</button>
+            </div>
+            <span class="fhint">Get free key from <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a> (free tier available)</span>
+          </div>
+          <div>
+            <div class="slabel" style="margin-bottom:9px">Choose model</div>
+            <div class="model-cards">
+              <div class="model-card gemini-m" id="mc-gemini-flash2" onclick="selModel('gemini','gemini-2.0-flash')">
+                <div class="mc-name">Gemini 2.0 Flash</div>
+                <div class="mc-sub">Latest, fastest, free tier</div>
+                <span class="mc-badge best">Recommended</span>
+              </div>
+              <div class="model-card gemini-m" id="mc-gemini-pro" onclick="selModel('gemini','gemini-1.5-pro')">
+                <div class="mc-name">Gemini 1.5 Pro</div>
+                <div class="mc-sub">Most accurate for PDFs</div>
+                <span class="mc-badge smart">Accurate</span>
+              </div>
+              <div class="model-card gemini-m" id="mc-gemini-flash" onclick="selModel('gemini','gemini-1.5-flash')">
+                <div class="mc-name">Gemini 1.5 Flash</div>
+                <div class="mc-sub">Fast &amp; cost-efficient</div>
+                <span class="mc-badge fast">Fast</span>
+              </div>
+            </div>
+          </div>
+          <button class="btn-sp primary" onclick="testConn('gemini')">Test Gemini connection</button>
+          <div class="test-result" id="tr-gemini"></div>
+        </div>
+      </div>
+
+      <!-- ── GOOGLE SHEETS ── -->
+      <div class="tab-panel" id="panelSheets">
+        <div class="sp-section">
+          <div class="info-box">
+            <strong>How to connect Google Sheets:</strong>
+            <ol>
+              <li>Go to <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a></li>
+              <li>Create project → Enable <strong>Google Sheets API</strong></li>
+              <li>APIs &amp; Services → Credentials → <strong>OAuth 2.0 Client ID</strong> (Web app)</li>
+              <li>Add your Vercel URL to <code>Authorized JavaScript origins</code></li>
+              <li>Paste Client ID below and click Connect</li>
+            </ol>
+          </div>
+          <div class="fg">
+            <label class="flabel">Google OAuth Client ID</label>
+            <input class="inp" id="iClientId" type="text" placeholder="123456789-abc.apps.googleusercontent.com">
+          </div>
+          <div class="fg">
+            <label class="flabel">Spreadsheet ID</label>
+            <input class="inp" id="iSheetId" type="text" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms">
+            <span class="fhint">From your Sheet URL: .../spreadsheets/d/<strong style="color:var(--text)">[THIS]</strong>/edit</span>
+          </div>
+          <div class="fg">
+            <label class="flabel">Range</label>
+            <input class="inp" id="iRange" type="text" placeholder="Sheet1!A:N" value="Sheet1!A:N">
+          </div>
+          <div class="status-row" id="sheetsStatusRow">
+            <div class="sdot" id="sheetsDot"></div>
+            <span id="sheetsStatusTxt" style="color:var(--t3)">Not connected</span>
+          </div>
+          <div style="display:flex;gap:7px">
+            <button class="btn-sp google-btn" id="btnGoogleConnect" onclick="connectGoogle()" style="flex:1">
+              <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+              Connect with Google
+            </button>
+            <button class="btn-sp danger" id="btnGoogleDis" onclick="disconnectGoogle()" style="display:none">Disconnect</button>
+          </div>
+          <div class="fg">
+            <label class="flabel">Column headers (pipe-separated)</label>
+            <textarea class="inp" id="iColMap" rows="2">Invoice # | Date | Due Date | Vendor | Client | Subtotal | Tax % | Tax Amt | Total | Status | Category | Payment Ref | Notes</textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── OPTIONS ── -->
+      <div class="tab-panel" id="panelOpts">
+        <div class="sp-section">
+          <div class="slabel" style="margin-bottom:4px">Extraction options</div>
+          <label class="option-row"><input type="checkbox" id="chkAutoSend" checked> Auto-send to Sheets after extraction</label>
+          <label class="option-row"><input type="checkbox" id="chkHeaders" checked> Add header row if sheet is empty</label>
+          <label class="option-row"><input type="checkbox" id="chkTimestamp" checked> Add timestamp column</label>
+          <div class="slabel" style="margin-top:8px;margin-bottom:4px">Display options</div>
+          <label class="option-row"><input type="checkbox" id="chkLineItems" checked> Show line items breakdown</label>
+          <label class="option-row"><input type="checkbox" id="chkSheetRow" checked> Show sheet row preview</label>
+        </div>
+      </div>
+
+    </div><!-- /sp-body -->
+
+    <div class="sp-save">
+      <button class="btn-sp primary" onclick="saveSettings()" style="flex:1">Save settings</button>
+      <button class="btn-sp secondary" onclick="closeSettings()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════ STATE ══════════════════ */
+const S = {
+  activeAI: 'claude',
+  claude: { key:'', model:'claude-sonnet-4-20250514' },
+  openai: { key:'', model:'gpt-4o' },
+  gemini: { key:'', model:'gemini-2.0-flash' },
+  sheets: { clientId:'', sheetId:'', range:'Sheet1!A:N', token:null, tokenExp:null, colMap:'Invoice # | Date | Due Date | Vendor | Client | Subtotal | Tax % | Tax Amt | Total | Status | Category | Payment Ref | Notes' },
+  opts: { autoSend:true, addHeaders:true, addTimestamp:true, showLineItems:true, showSheetRow:true }
+};
+let cFile=null, cB64=null, isSample=false, rowCount=0;
+let currentSpTab='claude';
+
+const SAMPLE=`INVOICE
+
+From: Nexus Cloud Solutions Pvt. Ltd.
+GST No: 27AABCN1234C1Z5 | Address: 14 Tech Park, Pune 411014
+
+To: Sharma & Associates LLP | 88 MG Road, Bengaluru 560001
+
+Invoice No: NCS-2024-0892
+Invoice Date: 15 March 2025 | Due Date: 29 March 2025
+
+ITEMS:
+1. Cloud Server Hosting (March 2025)    ₹12,500
+2. SSL Certificate Renewal              ₹2,800
+3. CDN Bandwidth Usage (500GB)          ₹4,200
+4. Technical Support — 10 hrs @ ₹900   ₹9,000
+
+Subtotal: ₹28,500 | GST 18%: ₹5,130 | TOTAL DUE: ₹33,630
+
+Payment: Bank Transfer · HDFC Bank XXXXXX4821 · IFSC HDFC0001234
+Reference: NCS-2024-0892 | Status: UNPAID`;
+
+const PROVIDERS = {
+  claude:{ label:'Claude',   emoji:'🟡', color:'#d4a72c' },
+  openai:{ label:'GPT-4o',  emoji:'🟢', color:'#10a37f' },
+  gemini:{ label:'Gemini',  emoji:'🔵', color:'#4285f4' },
+};
+
+/* ══════════════════ INIT ══════════════════ */
+(function init(){
+  try{ const s=JSON.parse(localStorage.getItem('invbot2')||'{}'); deepMerge(S,s); }catch(e){}
+  if(S.sheets.tokenExp && Date.now()>S.sheets.tokenExp-60000) S.sheets.token=null;
+  applyToUI(); updateAll();
+})();
+
+function deepMerge(t,s){ for(const k in s){ if(s[k]&&typeof s[k]==='object'&&!Array.isArray(s[k]))deepMerge(t[k]||(t[k]={}),s[k]); else t[k]=s[k]; } }
+
+function applyToUI(){
+  document.getElementById('iClaudeKey').value=S.claude.key||'';
+  document.getElementById('iOpenAIKey').value=S.openai.key||'';
+  document.getElementById('iGeminiKey').value=S.gemini.key||'';
+  document.getElementById('iClientId').value=S.sheets.clientId||'';
+  document.getElementById('iSheetId').value=S.sheets.sheetId||'';
+  document.getElementById('iRange').value=S.sheets.range||'Sheet1!A:N';
+  document.getElementById('iColMap').value=S.sheets.colMap||'';
+  document.getElementById('chkAutoSend').checked=S.opts.autoSend!==false;
+  document.getElementById('chkHeaders').checked=S.opts.addHeaders!==false;
+  document.getElementById('chkTimestamp').checked=S.opts.addTimestamp!==false;
+  document.getElementById('chkLineItems').checked=S.opts.showLineItems!==false;
+  document.getElementById('chkSheetRow').checked=S.opts.showSheetRow!==false;
+  selModelUI('claude',S.claude.model);
+  selModelUI('openai',S.openai.model);
+  selModelUI('gemini',S.gemini.model);
+}
+
+/* ══════════════════ AI SWITCHER ══════════════════ */
+function switchAI(p){
+  S.activeAI=p;
+  document.querySelectorAll('.ai-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab'+cap(p)).classList.add('active');
+  updateBtnStyle(); updateBanner(); updatePills();
+}
+
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+function capOpenAI(s){ return s==='openai'?'OpenAI':cap(s); }
+
+function updateBtnStyle(){
+  const btn=document.getElementById('btnMain');
+  btn.className='btn-main '+S.activeAI+'-btn';
+}
+
+function updateBanner(){
+  const key=S[S.activeAI]?.key;
+  const b=document.getElementById('aiBanner');
+  const ic=document.getElementById('aiBannerIcon');
+  const title=document.getElementById('aiBannerTitle');
+  const sub=document.getElementById('aiBannerSub');
+  const p=PROVIDERS[S.activeAI];
+  if(key){
+    b.className='ai-banner ok';
+    ic.textContent='✅';
+    title.textContent=p.label+' ready';
+    sub.textContent='Using model: '+S[S.activeAI].model;
+    b.querySelector('.ai-banner-action').className='ai-banner-action switch';
+    b.querySelector('.ai-banner-action').textContent='Switch';
+  } else {
+    b.className='ai-banner warn';
+    ic.textContent='⚠️';
+    title.textContent='No '+p.label+' API key';
+    sub.textContent='Add your key in Settings to extract invoices';
+    b.querySelector('.ai-banner-action').className='ai-banner-action setup';
+    b.querySelector('.ai-banner-action').textContent='Setup';
+  }
+}
+
+/* ══════════════════ SETTINGS PANEL ══════════════════ */
+function openSettings(){ document.getElementById('overlay').classList.add('open'); switchSpTab(S.activeAI==='claude'?'claude':S.activeAI==='openai'?'openai':'gemini'); }
+function closeSettings(){ document.getElementById('overlay').classList.remove('open'); }
+function closeBg(e){ if(e.target===document.getElementById('overlay'))closeSettings(); }
+
+function switchSpTab(t){
+  currentSpTab=t;
+  const tabs=['claude','openai','gemini','sheets','opts'];
+  tabs.forEach(id=>{
+    document.getElementById('spTab'+capOpenAI(id==='opts'?'Opts':id)).classList.remove('active');
+    document.getElementById('panel'+capOpenAI(id==='opts'?'Opts':id)).classList.remove('show');
+  });
+  document.getElementById('spTab'+capOpenAI(t==='opts'?'Opts':t)).classList.add('active');
+  document.getElementById('panel'+capOpenAI(t==='opts'?'Opts':t)).classList.add('show');
+}
+
+function saveSettings(){
+  S.claude.key=document.getElementById('iClaudeKey').value.trim();
+  S.openai.key=document.getElementById('iOpenAIKey').value.trim();
+  S.gemini.key=document.getElementById('iGeminiKey').value.trim();
+  S.sheets.clientId=document.getElementById('iClientId').value.trim();
+  S.sheets.sheetId=document.getElementById('iSheetId').value.trim();
+  S.sheets.range=document.getElementById('iRange').value.trim()||'Sheet1!A:N';
+  S.sheets.colMap=document.getElementById('iColMap').value.trim();
+  S.opts.autoSend=document.getElementById('chkAutoSend').checked;
+  S.opts.addHeaders=document.getElementById('chkHeaders').checked;
+  S.opts.addTimestamp=document.getElementById('chkTimestamp').checked;
+  S.opts.showLineItems=document.getElementById('chkLineItems').checked;
+  S.opts.showSheetRow=document.getElementById('chkSheetRow').checked;
+  persist(); updateAll(); closeSettings(); toast('Settings saved','ok');
+}
+
+function persist(){ localStorage.setItem('invbot2',JSON.stringify(S)); }
+function updateAll(){ refreshStatuses(); updateBtnStyle(); updateBanner(); updatePills(); renderAITabs(); updateMainBtn(); refreshSheetsStatus(); }
+
+/* ══════════════════ STATUS INDICATORS ══════════════════ */
+function refreshStatuses(){
+  updateProviderStatus('claude', document.getElementById('iClaudeKey').value.trim()||S.claude.key, 'sk-ant');
+  updateProviderStatus('openai', document.getElementById('iOpenAIKey').value.trim()||S.openai.key, 'sk-');
+  updateProviderStatus('gemini', document.getElementById('iGeminiKey').value.trim()||S.gemini.key, 'AI');
+}
+
+function updateProviderStatus(p, key, prefix){
+  const el=document.getElementById(p+'Status');
+  if(!el)return;
+  if(key&&key.startsWith(prefix)){ el.textContent='✓ Configured'; el.className='provider-status ok'; }
+  else if(key){ el.textContent='⚠ Check key'; el.className='provider-status'; }
+  else { el.textContent='Not configured'; el.className='provider-status'; }
+}
+
+function renderAITabs(){
+  ['claude','openai','gemini'].forEach(p=>{
+    const el=document.getElementById('tab'+capOpenAI(p));
+    const spEl=document.getElementById('spTab'+capOpenAI(p));
+    el.classList.toggle('configured',!!S[p].key);
+    if(spEl)spEl.classList.toggle('cfg',!!S[p].key);
+  });
+  const spSheets=document.getElementById('spTabSheets');
+  if(spSheets)spSheets.classList.toggle('cfg',!!(S.sheets.token&&S.sheets.sheetId));
+}
+
+function updatePills(){
+  const pAI=document.getElementById('pillAI');
+  const p=PROVIDERS[S.activeAI];
+  if(S[S.activeAI].key){ pAI.className='pill ok'; document.getElementById('pillAITxt').textContent=p.label+' ready'; }
+  else { pAI.className='pill'; document.getElementById('pillAITxt').textContent=p.label+' (no key)'; }
+
+  const pS=document.getElementById('pillSheets');
+  const ok=S.sheets.token&&S.sheets.sheetId&&!(Date.now()>S.sheets.tokenExp-60000);
+  if(ok){ pS.className='pill ok'; document.getElementById('pillSheetsTxt').textContent='Sheets linked'; }
+  else { pS.className='pill'; document.getElementById('pillSheetsTxt').textContent='Sheets'; }
+}
+
+function refreshSheetsStatus(){
+  const ok=S.sheets.token&&!(Date.now()>S.sheets.tokenExp-60000);
+  const hasId=!!(document.getElementById('iSheetId').value.trim()||S.sheets.sheetId);
+  const dot=document.getElementById('sheetsDot');
+  const txt=document.getElementById('sheetsStatusTxt');
+  const btnC=document.getElementById('btnGoogleConnect');
+  const btnD=document.getElementById('btnGoogleDis');
+  if(ok&&hasId){ dot.className='sdot ok'; txt.textContent='Connected · Sheet configured'; txt.style.color='var(--green)'; btnC.style.display='none'; btnD.style.display=''; }
+  else if(ok){ dot.className='sdot warn'; txt.textContent='Authorized · paste Spreadsheet ID'; txt.style.color='var(--amber)'; btnC.style.display='none'; btnD.style.display=''; }
+  else { dot.className='sdot'; txt.textContent='Not connected'; txt.style.color='var(--t3)'; btnC.style.display=''; btnD.style.display='none'; }
+}
+
+/* ══════════════════ MODEL SELECTION ══════════════════ */
+function selModel(p, m){
+  S[p].model=m;
+  selModelUI(p,m);
+  updateBanner();
+}
+function selModelUI(p,m){
+  const modelMap={
+    claude:['sonnet','opus','haiku'], openai:['gpt4o','gpt4omini','gpt4t'], gemini:['flash2','pro','flash']
+  };
+  const modelVals={
+    'claude-sonnet-4-20250514':'sonnet','claude-opus-4-20250514':'opus','claude-haiku-4-5-20251001':'haiku',
+    'gpt-4o':'gpt4o','gpt-4o-mini':'gpt4omini','gpt-4-turbo':'gpt4t',
+    'gemini-2.0-flash':'flash2','gemini-1.5-pro':'pro','gemini-1.5-flash':'flash'
+  };
+  const suffix=modelVals[m];
+  if(!suffix)return;
+  modelMap[p].forEach(id=>{
+    const el=document.getElementById('mc-'+p+'-'+id);
+    if(el)el.classList.toggle('sel',id===suffix);
+  });
+}
+
+/* ══════════════════ TEST CONNECTION ══════════════════ */
+async function testConn(p){
+  const key = p==='claude'?document.getElementById('iClaudeKey').value.trim():
+              p==='openai'?document.getElementById('iOpenAIKey').value.trim():
+              document.getElementById('iGeminiKey').value.trim();
+  const el=document.getElementById('tr-'+p);
+  if(!key){ showTR(p,'Enter an API key first','err'); return; }
+  el.className='test-result show'; el.textContent='Testing…';
+  try {
+    if(p==='claude'){
+      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:5,messages:[{role:'user',content:'Hi'}]})});
+      r.ok?showTR(p,'✓ Claude API connected successfully!','ok'):showTR(p,'✗ Invalid key: '+(await r.json()).error?.message,'err');
+    } else if(p==='openai'){
+      const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'gpt-4o-mini',max_tokens:5,messages:[{role:'user',content:'Hi'}]})});
+      r.ok?showTR(p,'✓ OpenAI API connected successfully!','ok'):showTR(p,'✗ '+(await r.json()).error?.message,'err');
+    } else {
+      const model=S.gemini.model||'gemini-2.0-flash';
+      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:'Hi'}]}],generationConfig:{maxOutputTokens:5}})});
+      r.ok?showTR(p,'✓ Gemini API connected successfully!','ok'):showTR(p,'✗ '+(await r.json()).error?.message,'err');
+    }
+    if(el.classList.contains('ok')) S[p].key=key;
+    refreshStatuses(); renderAITabs();
+  } catch(e){ showTR(p,'✗ Network error — check connection','err'); }
+}
+function showTR(p,msg,type){ const el=document.getElementById('tr-'+p); el.textContent=msg; el.className='test-result show '+type; }
+
+/* ══════════════════ GOOGLE OAUTH ══════════════════ */
+function connectGoogle(){
+  const cid=document.getElementById('iClientId').value.trim();
+  if(!cid){toast('Paste your OAuth Client ID first','err');return;}
+  if(typeof google==='undefined'){toast('Google Identity Services not loaded','err');return;}
+  S.sheets.clientId=cid;
+  google.accounts.oauth2.initTokenClient({
+    client_id:cid,
+    scope:'https://www.googleapis.com/auth/spreadsheets',
+    callback:(r)=>{
+      if(r.error){toast('Auth error: '+r.error,'err');return;}
+      S.sheets.token=r.access_token;
+      S.sheets.tokenExp=Date.now()+(r.expires_in*1000);
+      persist(); refreshSheetsStatus(); updatePills(); renderAITabs();
+      toast('Google Sheets connected!','ok');
+    }
+  }).requestAccessToken();
+}
+function disconnectGoogle(){
+  S.sheets.token=null; S.sheets.tokenExp=null;
+  persist(); refreshSheetsStatus(); updatePills(); renderAITabs();
+  toast('Disconnected from Google','ok');
+}
+
+/* ══════════════════ FILE HANDLING ══════════════════ */
+function onDragOver(e){e.preventDefault();document.getElementById('uploadZone').classList.add('drag');}
+function onDragLeave(){document.getElementById('uploadZone').classList.remove('drag');}
+function onDrop(e){e.preventDefault();onDragLeave();if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);}
+
+function handleFile(f){
+  if(!f)return;
+  isSample=false;cFile=f;
+  document.getElementById('fNm').textContent=f.name;
+  document.getElementById('fSz').textContent=(f.size/1024).toFixed(1)+' KB';
+  document.getElementById('fIc').textContent=f.type==='application/pdf'?'📄':'🖼️';
+  document.getElementById('fCard').classList.add('show');
+  document.getElementById('uploadZone').style.display='none';
+  if(f.type.startsWith('image/')){
+    const r=new FileReader();
+    r.onload=e=>{document.getElementById('iPrev').src=e.target.result;document.getElementById('iPrev').classList.add('show');cB64=e.target.result.split(',')[1];};
+    r.readAsDataURL(f);
+  } else {
+    document.getElementById('iPrev').classList.remove('show');
+    const r=new FileReader();r.onload=e=>{cB64=e.target.result.split(',')[1];};r.readAsDataURL(f);
+  }
+  setStep(2);updateMainBtn();
+}
+
+function clearFile(){
+  cFile=null;cB64=null;isSample=false;
+  document.getElementById('fCard').classList.remove('show');
+  document.getElementById('iPrev').classList.remove('show');
+  document.getElementById('uploadZone').style.display='';
+  document.getElementById('fInp').value='';
+  setStep(1);updateMainBtn();
+}
+
+function loadSample(){
+  isSample=true;cFile=null;cB64=null;
+  document.getElementById('fNm').textContent='sample_invoice_NCS-2024-0892.txt';
+  document.getElementById('fSz').textContent='built-in sample';
+  document.getElementById('fIc').textContent='📋';
+  document.getElementById('fCard').classList.add('show');
+  document.getElementById('uploadZone').style.display='none';
+  document.getElementById('iPrev').classList.remove('show');
+  setStep(2);updateMainBtn();
+}
+
+function updateMainBtn(){
+  const has=cFile||isSample;
+  document.getElementById('btnMain').disabled=!has;
+  if(has&&!S[S.activeAI].key) showWarn('No '+PROVIDERS[S.activeAI].label+' key — open ⚙ Settings');
+  else hideWarn();
+}
+
+/* ══════════════════ STEPS ══════════════════ */
+function setStep(n){
+  ['st1','st2','st3'].forEach((id,i)=>{
+    const el=document.getElementById(id);el.className='st';
+    if(i+1<n)el.classList.add('done');else if(i+1===n)el.classList.add('active');
+  });
+}
+
+/* ══════════════════ ALERTS ══════════════════ */
+function showErr(m){const e=document.getElementById('aErr');e.textContent=m;e.classList.add('show');}
+function hideErr(){document.getElementById('aErr').classList.remove('show');}
+function showWarn(m){const e=document.getElementById('aWarn');e.textContent=m;e.classList.add('show');}
+function hideWarn(){document.getElementById('aWarn').classList.remove('show');}
+
+let tTimer;
+function toast(msg,type='ok'){
+  const el=document.getElementById('toast');
+  el.textContent=(type==='ok'?'✓ ':'✗ ')+msg;
+  el.className='toast show '+type;
+  clearTimeout(tTimer);tTimer=setTimeout(()=>el.classList.remove('show'),3200);
+}
+
+/* ══════════════════ EXTRACT ══════════════════ */
+async function runExtract(){
+  const key=S[S.activeAI].key;
+  if(!key){openSettings();toast('Add '+PROVIDERS[S.activeAI].label+' API key first','err');return;}
+  hideErr();hideWarn();
+  const btn=document.getElementById('btnMain');
+  const lbl=document.getElementById('btnLbl');
+  btn.disabled=true;lbl.textContent='';
+  const sp=document.createElement('div');sp.className='spinner';
+  if(S.activeAI==='claude')sp.classList.add('dark');
+  btn.appendChild(sp);lbl.textContent='Extracting with '+PROVIDERS[S.activeAI].label+'…';
+
+  try{
+    const data=await callProvider();
+    rowCount++;
+    const usedAI=S.activeAI;
+    renderResult(data,usedAI);
+    setStep(3);
+    document.getElementById('rSub').textContent=`${rowCount} row${rowCount>1?'s':''} extracted · last: ${PROVIDERS[usedAI].label}`;
+
+    const sheetsOk=S.opts.autoSend&&S.sheets.token&&!(Date.now()>S.sheets.tokenExp-60000)&&S.sheets.sheetId;
+    if(sheetsOk){
+      lbl.textContent='Sending to Google Sheets…';
+      await pushToSheets(data);
+      toast('Row '+rowCount+' added to Google Sheets!','ok');
+    } else {
+      toast('Extracted with '+PROVIDERS[usedAI].label+'!','ok');
+    }
+  } catch(e){
+    showErr('Error: '+(e.message||'Something went wrong'));
+    console.error(e);
+  } finally {
+    btn.disabled=false;if(sp.parentNode)btn.removeChild(sp);
+    lbl.textContent='Extract another invoice';
+    btn.onclick=()=>{clearFile();btn.onclick=runExtract;};
+  }
+}
+
+/* ══════════════════ AI PROVIDER CALLS ══════════════════ */
+const PROMPT=`You are a professional accountant bot. Extract ALL invoice data and return ONLY valid JSON — no markdown, no explanation.
+Return EXACTLY this structure:
+{
+  "invoice_number":"string",
+  "invoice_date":"DD MMM YYYY",
+  "due_date":"DD MMM YYYY or null",
+  "vendor_name":"string",
+  "vendor_gst":"string or null",
+  "client_name":"string",
+  "line_items":[{"description":"string","qty":1,"rate":0,"amount":0}],
+  "subtotal":0,
+  "tax_percent":0,
+  "tax_amount":0,
+  "total_amount":0,
+  "currency":"INR",
+  "payment_method":"string or null",
+  "payment_ref":"string or null",
+  "payment_status":"Paid|Unpaid|Partial",
+  "category":"Software|Services|Utilities|Office|Travel|Marketing|Other",
+  "notes":"string or null"
+}`;
+
+async function callProvider(){
+  if(S.activeAI==='claude')  return callClaude();
+  if(S.activeAI==='openai')  return callOpenAI();
+  if(S.activeAI==='gemini')  return callGemini();
+}
+
+function parseJSON(txt){ return JSON.parse(txt.replace(/```json|```/g,'').trim()); }
+
+/* ── Claude ── */
+async function callClaude(){
+  let messages;
+  if(isSample){
+    messages=[{role:'user',content:PROMPT+'\n\nInvoice:\n'+SAMPLE}];
+  } else if(cFile?.type.startsWith('image/')&&cB64){
+    messages=[{role:'user',content:[{type:'image',source:{type:'base64',media_type:cFile.type,data:cB64}},{type:'text',text:PROMPT}]}];
+  } else if(cB64){
+    messages=[{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:cB64}},{type:'text',text:PROMPT}]}];
+  } else throw new Error('No file');
+
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':S.claude.key,'anthropic-version':'2023-06-01'},
+    body:JSON.stringify({model:S.claude.model,max_tokens:1500,messages})
+  });
+  if(!r.ok){const d=await r.json();throw new Error(d.error?.message||'Claude error '+r.status);}
+  const d=await r.json();
+  return parseJSON(d.content.map(b=>b.text||'').join(''));
+}
+
+/* ── OpenAI ── */
+async function callOpenAI(){
+  let userContent;
+  if(isSample){
+    userContent=PROMPT+'\n\nInvoice:\n'+SAMPLE;
+  } else if(cFile?.type.startsWith('image/')&&cB64){
+    userContent=[{type:'text',text:PROMPT},{type:'image_url',image_url:{url:`data:${cFile.type};base64,${cB64}`}}];
+  } else if(cB64){
+    // GPT-4o can handle PDFs as base64 image (first page rendered) — fallback to text description
+    userContent=PROMPT+'\n\n[PDF attached as base64 — extract from the document data: data:application/pdf;base64,'+cB64.substring(0,100)+'...]';
+  } else throw new Error('No file');
+
+  const r=await fetch('https://api.openai.com/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.openai.key},
+    body:JSON.stringify({model:S.openai.model,max_tokens:1500,messages:[{role:'user',content:userContent}]})
+  });
+  if(!r.ok){const d=await r.json();throw new Error(d.error?.message||'OpenAI error '+r.status);}
+  const d=await r.json();
+  return parseJSON(d.choices[0].message.content);
+}
+
+/* ── Gemini ── */
+async function callGemini(){
+  let parts;
+  if(isSample){
+    parts=[{text:PROMPT+'\n\nInvoice:\n'+SAMPLE}];
+  } else if(cB64&&cFile){
+    parts=[
+      {text:PROMPT},
+      {inline_data:{mime_type:cFile.type,data:cB64}}
+    ];
+  } else throw new Error('No file');
+
+  const model=S.gemini.model||'gemini-2.0-flash';
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${S.gemini.key}`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{parts}],generationConfig:{maxOutputTokens:1500,temperature:0}})
+  });
+  if(!r.ok){const d=await r.json();throw new Error(d.error?.message||'Gemini error '+r.status);}
+  const d=await r.json();
+  const txt=d.candidates?.[0]?.content?.parts?.[0]?.text||'';
+  return parseJSON(txt);
+}
+
+/* ══════════════════ PUSH TO SHEETS ══════════════════ */
+async function pushToSheets(d){
+  const sid=S.sheets.sheetId;
+  const range=S.sheets.range||'Sheet1!A:N';
+  const ts=new Date().toLocaleString('en-IN');
+  const row=buildRow(d,ts);
+  if(S.opts.addHeaders){
+    const cr=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid}/values/${encodeURIComponent(range.split('!')[0]+'!A1')}`,{headers:{'Authorization':'Bearer '+S.sheets.token}});
+    const cd=await cr.json();
+    if(!cd.values||cd.values.length===0){
+      const hdrs=S.sheets.colMap.split('|').map(c=>c.trim());
+      if(S.opts.addTimestamp)hdrs.push('Extracted by','Added at');
+      await appendRow(sid,range,hdrs);
+    }
+  }
+  await appendRow(sid,range,row);
+}
+
+function buildRow(d,ts){
+  const row=[
+    d.invoice_number||'',d.invoice_date||'',d.due_date||'',
+    d.vendor_name||'',d.client_name||'',
+    d.subtotal||0,(d.tax_percent||0)+'%',d.tax_amount||0,
+    d.total_amount||0,d.payment_status||'',d.category||'',
+    d.payment_ref||d.payment_method||'',d.notes||''
+  ];
+  if(S.opts.addTimestamp){row.push(PROVIDERS[S.activeAI].label,ts);}
+  return row;
+}
+
+async function appendRow(sid,range,row){
+  const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.sheets.token},
+    body:JSON.stringify({values:[row]})
+  });
+  if(!r.ok){const d=await r.json();throw new Error('Sheets: '+(d.error?.message||r.status));}
+}
+
+/* ══════════════════ RENDER RESULT ══════════════════ */
+function fmt(n){if(n==null||n==='')return'—';return'₹'+Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function renderResult(d,usedAI){
+  const sc=(d.payment_status||'').toLowerCase()==='paid'?'paid':'unpaid';
+  const lrows=(d.line_items||[]).map(li=>
+    `<tr><td>${esc(li.description)}</td><td>${li.qty||1}</td><td class="td-r">${fmt(li.rate)}</td><td class="td-r">${fmt(li.amount)}</td></tr>`
+  ).join('');
+
+  const cols=S.sheets.colMap.split('|').map(c=>c.trim());
+  const ts=new Date().toLocaleString('en-IN');
+  const vals=buildRow(d,ts);
+  const allCols=[...cols,...(S.opts.addTimestamp?['By','Added at']:[])];
+
+  const sheetsOk=S.sheets.token&&!(Date.now()>S.sheets.tokenExp-60000)&&S.sheets.sheetId;
+
+  document.getElementById('mainOut').innerHTML=`
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <div class="fields-grid">
+      <div class="fcard hi"><div class="fkey">Invoice number</div><div class="fval">${esc(d.invoice_number||'—')}</div></div>
+      <div class="fcard hi"><div class="fkey">Total amount</div><div class="fval amount">${fmt(d.total_amount)}</div></div>
+      <div class="fcard"><div class="fkey">Invoice date</div><div class="fval">${esc(d.invoice_date||'—')}</div></div>
+      <div class="fcard"><div class="fkey">Due date</div><div class="fval">${esc(d.due_date||'—')}</div></div>
+      <div class="fcard"><div class="fkey">Vendor</div><div class="fval">${esc(d.vendor_name||'—')}</div>${d.vendor_gst?`<div style="font-size:10px;color:var(--t3);margin-top:3px;font-family:var(--mono)">GST: ${esc(d.vendor_gst)}</div>`:''}</div>
+      <div class="fcard"><div class="fkey">Client / Bill-to</div><div class="fval">${esc(d.client_name||'—')}</div></div>
+      <div class="fcard"><div class="fkey">Subtotal</div><div class="fval">${fmt(d.subtotal)}</div></div>
+      <div class="fcard"><div class="fkey">Tax / GST</div><div class="fval">${d.tax_percent||0}% → ${fmt(d.tax_amount)}</div></div>
+      <div class="fcard"><div class="fkey">Payment status</div><div class="fval ${sc}">${esc(d.payment_status||'—')}</div></div>
+      <div class="fcard"><div class="fkey">Category</div><div class="fval">${esc(d.category||'—')}</div></div>
+      <div class="fcard wide"><div class="fkey">Payment reference</div><div class="fval">${esc(d.payment_ref||d.payment_method||'—')}</div></div>
+    </div>
+
+    ${S.opts.showLineItems&&lrows?`
+    <div class="table-card">
+      <div class="tc-head">Line items <span class="cnt">${d.line_items.length}</span>
+        <span class="ai-used-tag ${usedAI}" style="margin-left:auto">
+          ${PROVIDERS[usedAI].emoji} ${PROVIDERS[usedAI].label}
+        </span>
+      </div>
+      <table><thead><tr><th>Description</th><th>Qty</th><th style="text-align:right">Rate</th><th style="text-align:right">Amount</th></tr></thead>
+      <tbody>${lrows}</tbody></table>
+    </div>`:''}
+
+    ${S.opts.showSheetRow?`
+    <div class="sheet-preview">
+      <div class="sp-head">Google Sheets row preview <span class="new-badge">ROW #${rowCount}</span></div>
+      <div class="scroll">
+        <div class="sh-heads">${allCols.map(c=>`<div class="sh">${esc(c)}</div>`).join('')}</div>
+        <div class="sh-row">${vals.map(v=>`<div class="sc">${esc(String(v))}</div>`).join('')}</div>
+      </div>
+    </div>`:''}
+
+    <div class="action-row">
+      ${sheetsOk
+        ?`<button class="btn-sec green-btn" onclick="pushManual()" style="flex:1.5">↗ Send to Google Sheets</button>`
+        :`<button class="btn-sec" onclick="openSettings()" style="flex:1.5">⚙ Connect Google Sheets</button>`}
+      <button class="btn-sec" onclick="copyCsv(${JSON.stringify(vals)})">Copy CSV</button>
+      <button class="btn-sec" onclick="dlCsv(${JSON.stringify(allCols)},${JSON.stringify(vals)})">↓ CSV</button>
+    </div>
+  </div>`;
+
+  window._lastData=d;
+}
+
+async function pushManual(){
+  if(!window._lastData)return;
+  try{await pushToSheets(window._lastData);toast('Sent to Google Sheets!','ok');}
+  catch(e){toast('Sheets error: '+e.message,'err');}
+}
+
+function copyCsv(vals){navigator.clipboard.writeText(vals.map(v=>`"${v}"`).join(',')).then(()=>toast('CSV row copied!','ok'));}
+function dlCsv(cols,vals){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([cols.join(',')+'\n'+vals.map(v=>`"${v}"`).join(',')],{type:'text/csv'}));
+  a.download='invoice_row.csv';a.click();
+}
+
+function toggleVis(id,btn){
+  const inp=document.getElementById(id);
+  inp.type=inp.type==='password'?'text':'password';
+  btn.textContent=inp.type==='password'?'Show':'Hide';
+}
+
+document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();if(!document.getElementById('btnMain').disabled)runExtract();}});
+</script>
+</body>
+</html>
