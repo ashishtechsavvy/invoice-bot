@@ -535,47 +535,47 @@ async function testGeminiAPI() {
     }
     const data = await res.json();
 
-    // Filter only generateContent-capable models, prefer flash/pro
-    const allModels = (data.models || []).filter(m =>
-      m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent')
-    );
+    // Filter: generateContent capable only, strip deprecated versioned models (-001, -002 etc.)
+    // and non-generative model types
+    const DEPRECATED_RE = /-(00[1-9]|0[1-9][0-9])$|legacy|aqa|embedding|retrieval/i;
+    const allModels = (data.models || []).filter(m => {
+      if (!m.supportedGenerationMethods?.includes('generateContent')) return false;
+      const id = m.name.replace('models/', '');
+      if (!id.startsWith('gemini-')) return false;
+      if (DEPRECATED_RE.test(id)) return false;
+      return true;
+    });
 
-    if (!allModels.length) throw new Error('No generateContent models found for this key.');
+    if (!allModels.length) throw new Error('No usable Gemini models found for this key. It may be restricted or invalid.');
 
-    // Sort: flash-exp > flash > pro > others
+    // Sort best-first: gemini-2.x flash > gemini-1.5 flash > other flash > flash-lite > pro > rest
     const priority = m => {
       const n = m.name.toLowerCase();
-      if (n.includes('flash') && n.includes('exp')) return 0;
-      if (n.includes('flash-lite')) return 1;
-      if (n.includes('flash')) return 2;
-      if (n.includes('pro')) return 3;
-      return 4;
+      if (/gemini-2\.[0-9]/.test(n) && n.includes('flash') && !n.includes('lite')) return 0;
+      if (/gemini-1\.5/.test(n) && n.includes('flash') && !n.includes('lite')) return 1;
+      if (n.includes('flash') && !n.includes('lite')) return 2;
+      if (n.includes('flash-lite')) return 3;
+      if (/gemini-2\.[0-9]/.test(n) && n.includes('pro')) return 4;
+      if (n.includes('pro')) return 5;
+      return 6;
     };
-    allModels.sort((a,b) => priority(a) - priority(b));
+    allModels.sort((a, b) => priority(a) - priority(b));
 
     const sel = document.getElementById('modelSelect');
     sel.innerHTML = '';
     allModels.forEach(m => {
       const id = m.name.replace('models/', '');
-      const label = m.displayName || id;
       const opt = document.createElement('option');
       opt.value = id;
-      opt.textContent = label;
+      opt.textContent = m.displayName || id;
       sel.appendChild(opt);
     });
     sel.disabled = false;
     sel.style.cursor = 'pointer';
     sel.style.color = 'var(--text)';
 
-    // Auto-select best default
-    const preferred = ['gemini-2.0-flash','gemini-1.5-flash','gemini-2.0-flash-lite','gemini-1.5-pro'];
-    for (const p of preferred) {
-      if ([...sel.options].find(o => o.value.startsWith(p))) {
-        sel.value = [...sel.options].find(o => o.value.startsWith(p)).value;
-        break;
-      }
-    }
-    if (!sel.value) sel.selectedIndex = 0;
+    // Auto-select top of sorted list (already best model first)
+    sel.selectedIndex = 0;
     geminiModel = sel.value;
     sel.onchange = () => { geminiModel = sel.value; };
 
