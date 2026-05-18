@@ -176,10 +176,26 @@ tbody tr:last-child td { border-bottom: none; }
           <div style="background:var(--blue-light);border:1px solid #93c5fd;border-radius:8px;padding:10px 12px;font-size:12px;color:var(--blue);line-height:1.6">
             ✨ <b>Powered by Google Gemini</b> — free API key at <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--blue);font-weight:600">aistudio.google.com</a>
           </div>
-          <div class="sheets-input-row">
-            <div class="sheets-input-label">GEMINI API KEY <span style="color:var(--red)">*required</span></div>
-            <input class="sheets-input" type="password" id="geminiKeyInput" placeholder="AIzaSy...">
+
+          <!-- ── Gemini API Connection (separate) ── -->
+          <div style="background:var(--purple-light);border:1px solid #c4b4f0;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;">
+            <div style="font-size:12px;font-weight:600;color:var(--purple);display:flex;align-items:center;gap:6px;">🤖 Gemini AI Connection <span id="geminiStatus" style="font-size:11px;font-family:var(--mono);padding:2px 8px;border-radius:20px;background:#ede8fb;color:var(--purple);font-weight:400;margin-left:auto">Not connected</span></div>
+            <div class="sheets-input-row">
+              <div class="sheets-input-label">GEMINI API KEY <span style="color:var(--red)">*required</span></div>
+              <input class="sheets-input" type="password" id="geminiKeyInput" placeholder="AIzaSy..." oninput="resetGeminiStatus()">
+            </div>
+            <div class="sheets-input-row">
+              <div class="sheets-input-label">MODEL <span id="modelLoadingHint" style="color:var(--text3)">(test API key to load models)</span></div>
+              <select class="sheets-input" id="modelSelect" disabled style="cursor:not-allowed;color:var(--text3)">
+                <option value="">— Test API key first —</option>
+              </select>
+            </div>
+            <button style="width:100%;padding:9px;background:var(--purple);color:#fff;border:none;border-radius:9px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;" id="testApiBtn" onclick="testGeminiAPI()">
+              <span id="testApiLabel">🔍 Test API & Fetch Models</span>
+            </button>
+            <div id="geminiTestResult" style="display:none;font-size:12px;border-radius:8px;padding:8px 10px;line-height:1.5;"></div>
           </div>
+
           <div style="border-top:1px solid var(--border);padding-top:8px;font-size:11px;font-family:var(--mono);color:var(--text3);letter-spacing:0.05em;text-transform:uppercase">Google Sheets (optional — to push rows directly)</div>
           <div class="sheets-input-row">
             <div class="sheets-input-label">SHEETS API KEY</div>
@@ -407,6 +423,7 @@ let currentType = 'invoice';
 let currentFile = null, currentBase64 = null, isSample = false;
 let rowCount = 0, allExtracted = [];
 let geminiKey = null, gApiKey = null, sheetsSpreadsheetId = null, sheetsSheetName = 'Sheet1';
+let geminiModel = 'gemini-2.0-flash';
 let sheetsConnected = false, sheetsRowsPushed = 0;
 
 /* ── Init ── */
@@ -482,29 +499,140 @@ function loadSample() {
 }
 
 /* ── Sheets connect ── */
+/* ── Gemini API test + model fetch ── */
+let geminiModelsTested = false;
+
+function resetGeminiStatus() {
+  geminiModelsTested = false;
+  geminiModel = null;
+  document.getElementById('geminiStatus').textContent = 'Not connected';
+  document.getElementById('geminiStatus').style.background = '#ede8fb';
+  document.getElementById('geminiStatus').style.color = 'var(--purple)';
+  document.getElementById('modelSelect').innerHTML = '<option value="">— Test API key first —</option>';
+  document.getElementById('modelSelect').disabled = true;
+  document.getElementById('modelLoadingHint').textContent = '(test API key to load models)';
+  const res = document.getElementById('geminiTestResult');
+  res.style.display = 'none';
+}
+
+async function testGeminiAPI() {
+  const key = document.getElementById('geminiKeyInput').value.trim();
+  if (!key) { showError('Please enter your Gemini API key first.'); return; }
+
+  const btn = document.getElementById('testApiBtn');
+  const label = document.getElementById('testApiLabel');
+  const resultBox = document.getElementById('geminiTestResult');
+  btn.disabled = true;
+  label.textContent = '⏳ Fetching models…';
+  resultBox.style.display = 'none';
+
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}&pageSize=100`);
+    if (!res.ok) {
+      let msg = 'API error ' + res.status;
+      try { const e = await res.json(); msg = e.error?.message || msg; } catch(e) {}
+      throw new Error(msg);
+    }
+    const data = await res.json();
+
+    // Filter only generateContent-capable models, prefer flash/pro
+    const allModels = (data.models || []).filter(m =>
+      m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent')
+    );
+
+    if (!allModels.length) throw new Error('No generateContent models found for this key.');
+
+    // Sort: flash-exp > flash > pro > others
+    const priority = m => {
+      const n = m.name.toLowerCase();
+      if (n.includes('flash') && n.includes('exp')) return 0;
+      if (n.includes('flash-lite')) return 1;
+      if (n.includes('flash')) return 2;
+      if (n.includes('pro')) return 3;
+      return 4;
+    };
+    allModels.sort((a,b) => priority(a) - priority(b));
+
+    const sel = document.getElementById('modelSelect');
+    sel.innerHTML = '';
+    allModels.forEach(m => {
+      const id = m.name.replace('models/', '');
+      const label = m.displayName || id;
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = label;
+      sel.appendChild(opt);
+    });
+    sel.disabled = false;
+    sel.style.cursor = 'pointer';
+    sel.style.color = 'var(--text)';
+
+    // Auto-select best default
+    const preferred = ['gemini-2.0-flash','gemini-1.5-flash','gemini-2.0-flash-lite','gemini-1.5-pro'];
+    for (const p of preferred) {
+      if ([...sel.options].find(o => o.value.startsWith(p))) {
+        sel.value = [...sel.options].find(o => o.value.startsWith(p)).value;
+        break;
+      }
+    }
+    if (!sel.value) sel.selectedIndex = 0;
+    geminiModel = sel.value;
+    sel.onchange = () => { geminiModel = sel.value; };
+
+    geminiModelsTested = true;
+    geminiKey = key;
+    document.getElementById('geminiStatus').textContent = '✓ Connected';
+    document.getElementById('geminiStatus').style.background = 'var(--green-light)';
+    document.getElementById('geminiStatus').style.color = 'var(--green)';
+    document.getElementById('modelLoadingHint').textContent = `(${allModels.length} models loaded)`;
+
+    resultBox.style.display = 'block';
+    resultBox.style.background = 'var(--green-light)';
+    resultBox.style.border = '1px solid var(--green-mid)';
+    resultBox.style.color = 'var(--green)';
+    resultBox.innerHTML = `✅ <b>API key valid!</b> ${allModels.length} models available. Selected: <b>${geminiModel}</b>`;
+
+  } catch(e) {
+    resultBox.style.display = 'block';
+    resultBox.style.background = 'var(--red-light)';
+    resultBox.style.border = '1px solid #f5c6c0';
+    resultBox.style.color = 'var(--red)';
+    resultBox.innerHTML = `❌ <b>Connection failed:</b> ${e.message}. Check your API key and try again.`;
+    document.getElementById('geminiStatus').textContent = '✗ Error';
+    document.getElementById('geminiStatus').style.background = 'var(--red-light)';
+    document.getElementById('geminiStatus').style.color = 'var(--red)';
+  } finally {
+    btn.disabled = false;
+    label.textContent = '🔍 Test API & Fetch Models';
+  }
+}
+
 function connectSheets() {
   const gKey=document.getElementById('geminiKeyInput').value.trim();
   const sKey=document.getElementById('gApiKeyInput').value.trim();
   const id=document.getElementById('sheetIdInput').value.trim();
   const name=document.getElementById('sheetNameInput').value.trim()||'Sheet1';
   if(!gKey) { showError('Please enter your Gemini API key to enable AI extraction.'); return; }
+  if(!geminiModelsTested) { showError('Please test your Gemini API key first and select a model before connecting.'); return; }
   geminiKey=gKey; gApiKey=sKey||gKey; sheetsSpreadsheetId=id; sheetsSheetName=name;
   sheetsConnected=!!id;
   document.getElementById('connectStatus').className='connect-status connected';
   document.getElementById('connectStatus').textContent= id ? 'Connected ✓' : 'Gemini ready ✓';
   document.getElementById('connectForm').style.display='none';
   document.getElementById('connectedInfo').style.display='flex';
-  document.getElementById('connectedSheetId').textContent= id ? `📊 ${id.slice(0,24)}… / ${name}` : '✨ Gemini extraction ready · No sheet linked';
+  document.getElementById('connectedSheetId').textContent= id ? `📊 ${id.slice(0,24)}… / ${name}` : `✨ Gemini (${geminiModel}) ready · No sheet linked`;
   document.getElementById('connectedRowsSent').textContent='0 rows pushed to sheet';
-  showSuccess(id ? 'Connected! Extract a document then push to Sheets.' : 'Gemini key saved! You can extract documents now. Add a Spreadsheet ID to enable direct push.');
+  showSuccess(id ? `Connected! Using ${geminiModel}. Extract a document then push to Sheets.` : `Gemini key saved (${geminiModel})! You can extract documents now. Add a Spreadsheet ID to enable direct push.`);
 }
 
 function disconnectSheets() {
   geminiKey=null;gApiKey=null;sheetsSpreadsheetId=null;sheetsConnected=false;sheetsRowsPushed=0;
+  geminiModelsTested=false; geminiModel=null;
   document.getElementById('connectStatus').className='connect-status disconnected';
   document.getElementById('connectStatus').textContent='Not connected';
   document.getElementById('connectForm').style.display='flex';
   document.getElementById('connectedInfo').style.display='none';
+  resetGeminiStatus();
 }
 
 /* ── Extraction ── */
@@ -533,31 +661,28 @@ async function extractDoc() {
 
 async function callAPI() {
   const t = DOC_TYPES[currentType];
-  if (!geminiKey) throw new Error('Please enter your Gemini API key and click Save & Connect.');
+  if (!geminiKey) throw new Error('Please enter your Gemini API key and click "Test API & Fetch Models", then Save & Connect.');
+  if (!geminiModelsTested) throw new Error('Please test your API key first — click "Test API & Fetch Models" in the connection panel.');
+
+  const selectedModel = document.getElementById('modelSelect')?.value || geminiModel || 'gemini-2.0-flash';
 
   const parts = [];
 
   if (isSample) {
-    // Text-only sample — simplest path
     parts.push({ text: t.prompt + '\n\nDocument:\n' + t.sampleText });
-
   } else if (currentFile && currentFile.type.startsWith('image/')) {
-    // Images work fine as inline_data
     parts.push({ inline_data: { mime_type: currentFile.type, data: currentBase64 } });
     parts.push({ text: t.prompt });
-
   } else if (currentBase64) {
-    // PDFs must be uploaded via File API first, then referenced by URI
     const fileUri = await uploadToGeminiFileAPI(currentBase64, 'application/pdf', currentFile.name || 'document.pdf');
     parts.push({ file_data: { mime_type: 'application/pdf', file_uri: fileUri } });
     parts.push({ text: t.prompt });
-
   } else {
     throw new Error('No file selected.');
   }
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${geminiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${geminiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -571,14 +696,20 @@ async function callAPI() {
   if (!res.ok) {
     let msg = 'Gemini API error ' + res.status;
     try { const e = await res.json(); msg = e.error?.message || msg; } catch(e) {}
+    if (res.status === 400) msg += '. Try selecting a different model in the connection panel.';
+    if (res.status === 403) msg += '. Check your API key has access to this model.';
     throw new Error(msg);
   }
 
   const resp = await res.json();
   const text = resp.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  if (!text) throw new Error('Gemini returned an empty response. Check your API key and try again.');
+  if (!text) throw new Error('Gemini returned an empty response. Try a different model in the connection panel.');
   const clean = text.replace(/```json[\s\S]*?```|```[\s\S]*?```/g, m => m.replace(/```json|```/g,'')).replace(/```/g,'').trim();
-  return JSON.parse(clean);
+  try {
+    return JSON.parse(clean);
+  } catch(e) {
+    throw new Error('Failed to parse Gemini response as JSON. Try again or switch to a different model.');
+  }
 }
 
 async function uploadToGeminiFileAPI(base64Data, mimeType, displayName) {
