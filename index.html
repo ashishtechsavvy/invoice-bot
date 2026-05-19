@@ -1240,6 +1240,8 @@ async function signOut() {
 /* ── Save / Load user settings ── */
 async function saveUserSettings() {
   if (!currentUser) return;
+  // Check if row exists for this user
+  const { data: existing } = await supa.from('invoice_bot_users').select('id').eq('user_id', currentUser.id).single();
   const settings = {
     user_id: currentUser.id,
     gemini_key: geminiKey || '',
@@ -1248,7 +1250,11 @@ async function saveUserSettings() {
     sheet_name: sheetsSheetName || 'Sheet1',
     updated_at: new Date().toISOString()
   };
-  await supa.from('invoice_bot_users').upsert(settings, { onConflict: 'user_id' });
+  if (existing) {
+    await supa.from('invoice_bot_users').update(settings).eq('user_id', currentUser.id);
+  } else {
+    await supa.from('invoice_bot_users').insert(settings);
+  }
 }
 
 async function loadUserSettings() {
