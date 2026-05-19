@@ -3,141 +3,184 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Doc Extractor — Powered by Gemini</title>
+<title>Smart Doc → Sheets Bot v5</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #f7f8f5; --surface: #ffffff; --surface2: #f0f2ee;
-  --border: #e2e6de; --border2: #d0d6ca;
-  --green: #2d7d46; --green-light: #e8f5ec; --green-mid: #4caf6e;
-  --blue: #1a56a0; --blue-light: #e8f0fb;
-  --purple: #5b3fa0; --purple-light: #f0ecfb;
-  --red: #c0392b; --red-light: #fdf0ee;
-  --amber: #b45309; --amber-light: #fef3e2;
-  --text: #1a1f18; --text2: #5a6357; --text3: #9aaa95;
-  --mono: 'IBM Plex Mono', monospace; --sans: 'Sora', sans-serif; --radius: 12px;
+  --bg:#f7f8f5;--surface:#ffffff;--surface2:#f0f2ee;
+  --border:#e2e6de;--border2:#d0d6ca;
+  --green:#2d7d46;--green-light:#e8f5ec;--green-mid:#4caf6e;
+  --blue:#1a56a0;--blue-light:#e8f0fb;
+  --purple:#5b3fa0;--purple-light:#f0ecfb;
+  --red:#c0392b;--red-light:#fdf0ee;
+  --amber:#b45309;--amber-light:#fef3e2;
+  --text:#1a1f18;--text2:#5a6357;--text3:#9aaa95;
+  --mono:'IBM Plex Mono',monospace;--sans:'Sora',sans-serif;--radius:12px;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
 
-.header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; gap: 12px; }
-.logo-box { width: 36px; height: 36px; background: var(--green-light); border: 1.5px solid var(--green); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; }
-.header h1 { font-size: 15px; font-weight: 600; letter-spacing: -0.02em; }
-.header p { font-size: 12px; color: var(--text2); margin-top: 1px; }
-.step-bar { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text3); font-family: var(--mono); }
-.step { padding: 3px 10px; border-radius: 20px; border: 1px solid var(--border2); }
-.step.active { background: var(--green-light); border-color: var(--green); color: var(--green); font-weight: 500; }
-.step.done { background: var(--green); color: #fff; border-color: var(--green); }
+/* Header */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px;}
+.logo-box{width:36px;height:36px;background:var(--green-light);border:1.5px solid var(--green);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;}
+.header h1{font-size:15px;font-weight:600;letter-spacing:-0.02em;}
+.header p{font-size:12px;color:var(--text2);margin-top:1px;}
+.step-bar{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);font-family:var(--mono);}
+.step{padding:3px 10px;border-radius:20px;border:1px solid var(--border2);}
+.step.active{background:var(--green-light);border-color:var(--green);color:var(--green);font-weight:500;}
+.step.done{background:var(--green);color:#fff;border-color:var(--green);}
 
-.type-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; gap: 4px; overflow-x: auto; }
-.type-btn { padding: 10px 14px; border: none; background: none; cursor: pointer; font-family: var(--sans); font-size: 13px; font-weight: 500; color: var(--text2); border-bottom: 2px solid transparent; white-space: nowrap; transition: all 0.15s; display: flex; align-items: center; gap: 6px; }
-.type-btn:hover { color: var(--text); }
-.type-btn.active { color: var(--green); border-bottom-color: var(--green); }
-.type-emoji { font-size: 15px; }
+/* Type bar */
+.type-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:4px;overflow-x:auto;}
+.type-btn{padding:10px 14px;border:none;background:none;cursor:pointer;font-family:var(--sans);font-size:13px;font-weight:500;color:var(--text2);border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.15s;display:flex;align-items:center;gap:6px;}
+.type-btn:hover{color:var(--text);}
+.type-btn.active{color:var(--green);border-bottom-color:var(--green);}
+.type-emoji{font-size:15px;}
 
-.layout { display: grid; grid-template-columns: 400px 1fr; min-height: calc(100vh - 109px); }
-.left { padding: 20px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 18px; background: var(--surface); overflow-y: auto; }
-.right { padding: 20px; display: flex; flex-direction: column; gap: 18px; overflow-y: auto; }
-.section-label { font-size: 11px; font-family: var(--mono); color: var(--text3); letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 8px; }
+/* Layout */
+.layout{display:grid;grid-template-columns:400px 1fr;min-height:calc(100vh - 109px);}
+.left{padding:20px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:18px;background:var(--surface);overflow-y:auto;}
+.right{padding:20px;display:flex;flex-direction:column;gap:18px;overflow-y:auto;}
+.section-label{font-size:11px;font-family:var(--mono);color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;}
 
-.sheets-connect { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
-.sheets-connect-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.sheets-connect-title { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 7px; }
-.connect-status { font-size: 11px; font-family: var(--mono); padding: 2px 8px; border-radius: 20px; }
-.connect-status.disconnected { background: var(--amber-light); color: var(--amber); }
-.connect-status.connected { background: var(--green-light); color: var(--green); }
-.sheets-fields { display: flex; flex-direction: column; gap: 8px; }
-.sheets-input-row { display: flex; flex-direction: column; gap: 4px; }
-.sheets-input-label { font-size: 11px; color: var(--text3); font-family: var(--mono); }
-.sheets-input { width: 100%; padding: 8px 10px; border: 1px solid var(--border2); border-radius: 8px; font-family: var(--mono); font-size: 12px; background: var(--surface); color: var(--text); outline: none; transition: border-color 0.15s; }
-.sheets-input:focus { border-color: var(--green); }
-.sheets-input::placeholder { color: var(--text3); }
-.btn-connect { width: 100%; padding: 9px; background: var(--green); color: #fff; border: none; border-radius: 9px; font-family: var(--sans); font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
-.btn-connect:hover { background: #236138; }
-.btn-disconnect { font-size: 11px; color: var(--red); background: none; border: none; cursor: pointer; text-decoration: underline; }
-.connected-info { font-size: 12px; color: var(--text2); font-family: var(--mono); word-break: break-all; }
+/* Sheets connect */
+.sheets-connect{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
+.sheets-connect-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.sheets-connect-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;}
+.connect-status{font-size:11px;font-family:var(--mono);padding:2px 8px;border-radius:20px;}
+.connect-status.disconnected{background:var(--amber-light);color:var(--amber);}
+.connect-status.connected{background:var(--green-light);color:var(--green);}
+.sheets-fields{display:flex;flex-direction:column;gap:8px;}
+.sheets-input-row{display:flex;flex-direction:column;gap:4px;}
+.sheets-input-label{font-size:11px;color:var(--text3);font-family:var(--mono);}
+.sheets-input{width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-family:var(--mono);font-size:12px;background:var(--surface);color:var(--text);outline:none;transition:border-color 0.15s;}
+.sheets-input:focus{border-color:var(--green);}
+.sheets-input::placeholder{color:var(--text3);}
+.btn-connect{width:100%;padding:9px;background:var(--green);color:#fff;border:none;border-radius:9px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;transition:background 0.15s;}
+.btn-connect:hover{background:#236138;}
+.btn-disconnect{font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;text-decoration:underline;}
+.connected-info{font-size:12px;color:var(--text2);font-family:var(--mono);word-break:break-all;}
 
-.upload-zone { border: 2px dashed var(--border2); border-radius: var(--radius); padding: 32px 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg); }
-.upload-zone:hover, .upload-zone.drag { border-color: var(--green); background: var(--green-light); }
-.upload-zone .icon { font-size: 30px; margin-bottom: 8px; }
-.upload-zone h3 { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
-.upload-zone p { font-size: 12px; color: var(--text2); }
-.upload-zone input { display: none; }
-.file-preview { display: none; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; align-items: center; gap: 10px; }
-.file-preview.visible { display: flex; }
-.file-icon { width: 38px; height: 38px; background: var(--blue-light); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
-.file-name { font-size: 13px; font-weight: 500; word-break: break-all; }
-.file-size { font-size: 11px; color: var(--text2); margin-top: 2px; font-family: var(--mono); }
-.btn-remove { margin-left: auto; background: none; border: none; color: var(--text3); cursor: pointer; font-size: 18px; padding: 4px; flex-shrink: 0; }
-.btn-remove:hover { color: var(--red); }
-.img-preview { display: none; width: 100%; border-radius: 10px; border: 1px solid var(--border); max-height: 200px; object-fit: contain; background: var(--bg); }
-.img-preview.visible { display: block; }
+/* Upload */
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--radius);padding:28px 16px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--bg);}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--green);background:var(--green-light);}
+.upload-zone .icon{font-size:26px;margin-bottom:8px;}
+.upload-zone h3{font-size:13px;font-weight:600;margin-bottom:3px;}
+.upload-zone p{font-size:12px;color:var(--text2);}
+.upload-zone input{display:none;}
 
-.or-row { display: flex; align-items: center; gap: 10px; }
-.or-line { flex: 1; height: 1px; background: var(--border); }
-.or-text { font-size: 11px; color: var(--text3); font-family: var(--mono); }
-.btn-sample { width: 100%; padding: 10px; background: var(--purple-light); border: 1px solid #c4b4f0; border-radius: 10px; color: var(--purple); font-family: var(--sans); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
-.btn-sample:hover { background: #e4dcf8; }
+/* File queue */
+.file-queue{display:flex;flex-direction:column;gap:6px;}
+.file-item{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;}
+.file-item-icon{width:32px;height:32px;background:var(--blue-light);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.file-item-info{flex:1;min-width:0;}
+.file-item-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.file-item-meta{font-size:11px;color:var(--text3);font-family:var(--mono);}
+.file-item-status{font-size:11px;font-family:var(--mono);padding:2px 7px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
+.file-item-status.pending{background:var(--amber-light);color:var(--amber);}
+.file-item-status.processing{background:var(--blue-light);color:var(--blue);}
+.file-item-status.done{background:var(--green-light);color:var(--green);}
+.file-item-status.error{background:var(--red-light);color:var(--red);}
+.btn-remove-file{background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:2px 4px;flex-shrink:0;}
+.btn-remove-file:hover{color:var(--red);}
+.img-preview{display:none;width:100%;border-radius:10px;border:1px solid var(--border);max-height:160px;object-fit:contain;background:var(--bg);}
+.img-preview.visible{display:block;}
 
-.btn-extract { width: 100%; padding: 13px; background: var(--green); color: #fff; border: none; border-radius: var(--radius); font-family: var(--sans); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-.btn-extract:hover { background: #236138; }
-.btn-extract:disabled { opacity: 0.5; cursor: not-allowed; }
-.spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.error-box { background: var(--red-light); border: 1px solid #f5c6c0; border-radius: 10px; padding: 12px 14px; font-size: 13px; color: var(--red); display: none; }
-.error-box.visible { display: block; }
-.success-box { background: var(--green-light); border: 1px solid var(--green-mid); border-radius: 10px; padding: 12px 14px; font-size: 13px; color: var(--green); display: none; }
-.success-box.visible { display: block; }
+/* Queue summary bar */
+.queue-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--green-light);border:1px solid var(--green-mid);border-radius:10px;font-size:12px;color:var(--green);font-family:var(--mono);}
 
-.sheets-header { display: flex; align-items: center; gap: 10px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
-.sheets-logo { width: 26px; height: 26px; }
-.sheets-title { font-size: 14px; font-weight: 600; }
-.sheets-sub { font-size: 12px; color: var(--text2); }
+/* OR / sample */
+.or-row{display:flex;align-items:center;gap:10px;}
+.or-line{flex:1;height:1px;background:var(--border);}
+.or-text{font-size:11px;color:var(--text3);font-family:var(--mono);}
+.btn-sample{width:100%;padding:10px;background:var(--purple-light);border:1px solid #c4b4f0;border-radius:10px;color:var(--purple);font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s;}
+.btn-sample:hover{background:#e4dcf8;}
 
-.fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.field-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px; transition: all 0.2s; }
-.field-card.highlight { border-color: var(--green); background: var(--green-light); }
-.field-label { font-size: 11px; font-family: var(--mono); color: var(--text3); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 5px; }
-.field-value { font-size: 14px; font-weight: 500; color: var(--text); min-height: 18px; }
-.field-value.amount { color: var(--green); font-family: var(--mono); font-size: 15px; font-weight: 600; }
-.field-value.status-paid { color: var(--green); }
-.field-value.status-pending { color: var(--amber); }
-.confidence { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-family: var(--mono); padding: 2px 8px; border-radius: 20px; margin-top: 4px; }
-.confidence.high { background: var(--green-light); color: var(--green); }
+/* Buttons */
+.btn-extract{width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:var(--radius);font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-extract:hover{background:#236138;}
+.btn-extract:disabled{opacity:.5;cursor:not-allowed;}
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.error-box{background:var(--red-light);border:1px solid #f5c6c0;border-radius:10px;padding:12px 14px;font-size:13px;color:var(--red);display:none;line-height:1.5;}
+.error-box.visible{display:block;}
+.success-box{background:var(--green-light);border:1px solid var(--green-mid);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--green);display:none;}
+.success-box.visible{display:block;}
 
-.line-items-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-.line-items-header { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 600; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-thead th { padding: 7px 14px; text-align: left; font-family: var(--mono); font-size: 11px; color: var(--text3); letter-spacing: 0.05em; text-transform: uppercase; background: var(--bg); border-bottom: 1px solid var(--border); }
-tbody td { padding: 9px 14px; border-bottom: 1px solid var(--border); }
-tbody tr:last-child td { border-bottom: none; }
-.td-amount { font-family: var(--mono); text-align: right; }
+/* Right panel */
+.sheets-header{display:flex;align-items:center;gap:10px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+.sheets-logo{width:26px;height:26px;}
+.sheets-title{font-size:14px;font-weight:600;}
+.sheets-sub{font-size:12px;color:var(--text2);}
 
-.sheet-row-preview { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-.sheet-row-label { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-.sheet-row-label .badge { font-family: var(--mono); font-size: 11px; padding: 2px 8px; background: var(--green-light); color: var(--green); border-radius: 20px; }
-.sheet-cols { display: flex; overflow-x: auto; border-bottom: 1px solid var(--border); }
-.sheet-col-header { padding: 7px 10px; font-size: 11px; font-family: var(--mono); color: var(--text3); background: var(--bg); border-right: 1px solid var(--border); white-space: nowrap; min-width: 90px; flex-shrink: 0; }
-.sheet-col-header:first-child { background: var(--green-light); color: var(--green); font-weight: 500; }
-.sheet-row-data { display: flex; overflow-x: auto; }
-.sheet-cell { padding: 9px 10px; font-size: 12px; border-right: 1px solid var(--border); white-space: nowrap; min-width: 90px; flex-shrink: 0; font-family: var(--mono); color: var(--text2); }
-.sheet-cell.new { background: #f0fbf4; color: var(--green); font-weight: 500; }
-.sheet-cell:last-child { border-right: none; }
+/* Fields */
+.fields-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.field-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;transition:all .2s;}
+.field-card.highlight{border-color:var(--green);background:var(--green-light);}
+.field-label{font-size:11px;font-family:var(--mono);color:var(--text3);letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px;}
+.field-value{font-size:14px;font-weight:500;color:var(--text);min-height:18px;}
+.field-value.amount{color:var(--green);font-family:var(--mono);font-size:15px;font-weight:600;}
+.field-value.status-paid{color:var(--green);}
+.field-value.status-pending{color:var(--amber);}
+.confidence{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-family:var(--mono);padding:2px 8px;border-radius:20px;margin-top:4px;}
+.confidence.high{background:var(--green-light);color:var(--green);}
 
-.action-row { display: flex; gap: 8px; flex-wrap: wrap; }
-.action-btn { flex: 1; min-width: 120px; padding: 10px 12px; border-radius: 9px; font-family: var(--sans); font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid; transition: all 0.15s; text-align: center; }
-.action-btn.copy { background: var(--surface); border-color: var(--border2); color: var(--text2); }
-.action-btn.copy:hover { background: var(--bg); border-color: var(--green); color: var(--green); }
-.action-btn.download { background: var(--green); border-color: var(--green); color: #fff; font-weight: 600; }
-.action-btn.download:hover { background: #236138; }
-.action-btn.push { background: var(--blue-light); border-color: #93c5fd; color: var(--blue); }
-.action-btn.push:hover:not(:disabled) { background: #d8e9ff; }
-.action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+/* Table */
+.line-items-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.line-items-header{padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{padding:7px 14px;text-align:left;font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:.05em;text-transform:uppercase;background:var(--bg);border-bottom:1px solid var(--border);}
+tbody td{padding:9px 14px;border-bottom:1px solid var(--border);}
+tbody tr:last-child td{border-bottom:none;}
+.td-amount{font-family:var(--mono);text-align:right;}
 
-.empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
-.empty-icon { font-size: 46px; margin-bottom: 14px; opacity: 0.5; }
-.empty-state h3 { font-size: 15px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
-.empty-state p { font-size: 13px; line-height: 1.6; }
+/* Sheet preview */
+.sheet-row-preview{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.sheet-row-label{padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;}
+.sheet-row-label .badge{font-family:var(--mono);font-size:11px;padding:2px 8px;background:var(--green-light);color:var(--green);border-radius:20px;}
+.sheet-cols{display:flex;overflow-x:auto;border-bottom:1px solid var(--border);}
+.sheet-col-header{padding:7px 10px;font-size:11px;font-family:var(--mono);color:var(--text3);background:var(--bg);border-right:1px solid var(--border);white-space:nowrap;min-width:90px;flex-shrink:0;}
+.sheet-col-header:first-child{background:var(--green-light);color:var(--green);font-weight:500;}
+.sheet-row-data{display:flex;overflow-x:auto;}
+.sheet-cell{padding:9px 10px;font-size:12px;border-right:1px solid var(--border);white-space:nowrap;min-width:90px;flex-shrink:0;font-family:var(--mono);color:var(--text2);}
+.sheet-cell.new{background:#f0fbf4;color:var(--green);font-weight:500;}
+.sheet-cell:last-child{border-right:none;}
+
+/* Actions */
+.action-row{display:flex;gap:8px;flex-wrap:wrap;}
+.action-btn{flex:1;min-width:120px;padding:10px 12px;border-radius:9px;font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;border:1px solid;transition:all .15s;text-align:center;}
+.action-btn.copy{background:var(--surface);border-color:var(--border2);color:var(--text2);}
+.action-btn.copy:hover{background:var(--bg);border-color:var(--green);color:var(--green);}
+.action-btn.download{background:var(--green);border-color:var(--green);color:#fff;font-weight:600;}
+.action-btn.download:hover{background:#236138;}
+.action-btn.push{background:var(--blue-light);border-color:#93c5fd;color:var(--blue);}
+.action-btn.push:hover:not(:disabled){background:#d8e9ff;}
+.action-btn:disabled{opacity:.45;cursor:not-allowed;}
+
+/* Batch progress */
+.batch-progress{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.batch-header{padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;}
+.batch-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);}
+.batch-item:last-child{border-bottom:none;}
+.batch-item-name{flex:1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.batch-item-status{font-size:11px;font-family:var(--mono);padding:2px 8px;border-radius:20px;flex-shrink:0;}
+
+/* Result tabs (multi-file) */
+.result-tabs{display:flex;gap:4px;overflow-x:auto;padding-bottom:2px;}
+.result-tab{padding:6px 12px;border-radius:8px;border:1px solid var(--border2);font-size:12px;cursor:pointer;background:var(--surface);color:var(--text2);white-space:nowrap;transition:all .15s;}
+.result-tab.active{background:var(--green-light);border-color:var(--green);color:var(--green);font-weight:500;}
+
+/* Empty */
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3);}
+.empty-icon{font-size:46px;margin-bottom:14px;opacity:.5;}
+.empty-state h3{font-size:15px;font-weight:600;color:var(--text2);margin-bottom:6px;}
+.empty-state p{font-size:13px;line-height:1.6;}
+
+/* Info boxes */
+.info-box{border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6;}
+.info-box.blue{background:var(--blue-light);border:1px solid #93c5fd;color:var(--blue);}
+.info-box.amber{background:var(--amber-light);border:1px solid #fcd34d;color:var(--amber);}
+.info-box.purple{background:var(--purple-light);border:1px solid #c4b4f0;color:var(--purple);}
 </style>
 </head>
 <body>
@@ -146,7 +189,7 @@ tbody tr:last-child td { border-bottom: none; }
   <div class="logo-box">📄</div>
   <div>
     <h1>Smart Doc → Google Sheets Bot</h1>
-    <p>Powered by Gemini AI · extracts any document into your spreadsheet</p>
+    <p>Gemini 3.1 Flash Lite · Extract any document into your spreadsheet</p>
   </div>
   <div class="step-bar">
     <span class="step active" id="step1">1. Upload</span>
@@ -162,8 +205,33 @@ tbody tr:last-child td { border-bottom: none; }
 <div class="layout">
   <div class="left">
 
+    <!-- ── Gemini API Key ── -->
     <div>
-      <div class="section-label">Google Sheets connection</div>
+      <div class="section-label">Gemini AI key</div>
+      <div class="sheets-connect">
+        <div class="sheets-connect-header">
+          <div class="sheets-connect-title">🤖 Gemini 3.1 Flash Lite</div>
+          <span class="connect-status disconnected" id="geminiStatus">Not set</span>
+        </div>
+        <div id="geminiForm" class="sheets-fields">
+          <div class="info-box blue">✨ Free API key at <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--blue);font-weight:600">aistudio.google.com</a></div>
+          <div class="sheets-input-row">
+            <div class="sheets-input-label">GEMINI API KEY <span style="color:var(--red)">*required</span></div>
+            <input class="sheets-input" type="password" id="geminiKeyInput" placeholder="AIzaSy...">
+          </div>
+          <button class="btn-connect" onclick="saveGeminiKey()">Save API Key</button>
+          <div style="font-size:11px;color:var(--text3);line-height:1.6">🔒 Stays in your browser only — never sent anywhere except Google AI APIs.</div>
+        </div>
+        <div id="geminiConnectedInfo" style="display:none;flex-direction:column;gap:6px">
+          <div style="font-size:12px;color:var(--text2)">Using <b>gemini-3.1-flash-lite</b></div>
+          <button class="btn-disconnect" onclick="clearGeminiKey()">Change key</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Google Sheets connect ── -->
+    <div>
+      <div class="section-label">Google Sheets (optional)</div>
       <div class="sheets-connect">
         <div class="sheets-connect-header">
           <div class="sheets-connect-title">
@@ -173,33 +241,32 @@ tbody tr:last-child td { border-bottom: none; }
           <span class="connect-status disconnected" id="connectStatus">Not connected</span>
         </div>
         <div id="connectForm" class="sheets-fields">
-          <div style="background:var(--blue-light);border:1px solid #93c5fd;border-radius:8px;padding:10px 12px;font-size:12px;color:var(--blue);line-height:1.6">
-            ✨ <b>Powered by Google Gemini</b> — free API key at <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--blue);font-weight:600">aistudio.google.com</a>
-          </div>
 
-          <!-- ── Gemini API Connection (separate) ── -->
-          <div style="background:var(--purple-light);border:1px solid #c4b4f0;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;">
-            <div style="font-size:12px;font-weight:600;color:var(--purple);display:flex;align-items:center;gap:6px;">🤖 Gemini AI Connection <span id="geminiStatus" style="font-size:11px;font-family:var(--mono);padding:2px 8px;border-radius:20px;background:#ede8fb;color:var(--purple);font-weight:400;margin-left:auto">Not connected</span></div>
-            <div class="sheets-input-row">
-              <div class="sheets-input-label">GEMINI API KEY <span style="color:var(--red)">*required</span></div>
-              <input class="sheets-input" type="password" id="geminiKeyInput" placeholder="AIzaSy..." oninput="resetGeminiStatus()">
-            </div>
-            <div class="sheets-input-row">
-              <div class="sheets-input-label">MODEL <span id="modelLoadingHint" style="color:var(--text3)">(test API key to load models)</span></div>
-              <select class="sheets-input" id="modelSelect" disabled style="cursor:not-allowed;color:var(--text3)">
-                <option value="">— Test API key first —</option>
-              </select>
-            </div>
-            <button style="width:100%;padding:9px;background:var(--purple);color:#fff;border:none;border-radius:9px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;" id="testApiBtn" onclick="testGeminiAPI()">
-              <span id="testApiLabel">🔍 Test API & Fetch Models</span>
-            </button>
-            <div id="geminiTestResult" style="display:none;font-size:12px;border-radius:8px;padding:8px 10px;line-height:1.5;"></div>
+          <!-- OAuth notice -->
+          <div class="info-box amber">
+            ⚠️ <b>Google Sheets requires OAuth</b> — API keys alone won't work (Google disabled them for Sheets). Use the free <b>Apps Script Web App</b> method below:
           </div>
+          <details style="cursor:pointer">
+            <summary style="font-size:12px;color:var(--blue);font-weight:600;padding:6px 0;user-select:none">📋 How to set up Apps Script (1 min)</summary>
+            <div style="font-size:12px;color:var(--text2);line-height:1.7;padding:8px 0;border-top:1px solid var(--border);margin-top:6px">
+              1. Open your Google Sheet → <b>Extensions → Apps Script</b><br>
+              2. Paste this code and save:<br>
+              <code style="display:block;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;margin:6px 0;font-size:11px;white-space:pre-wrap">function doPost(e){
+  var data=JSON.parse(e.postData.contents);
+  var ss=SpreadsheetApp.openById(data.sheetId);
+  var sh=ss.getSheetByName(data.sheetName)||ss.getSheets()[0];
+  sh.getRange(sh.getLastRow()+1,1,data.rows.length,data.rows[0].length).setValues(data.rows);
+  return ContentService.createTextOutput(JSON.stringify({ok:true})).setMimeType(ContentService.MimeType.JSON);
+}</code>
+              3. Click <b>Deploy → New deployment → Web app</b><br>
+              4. Set "Who has access" → <b>Anyone</b> → Deploy<br>
+              5. Copy the <b>Web app URL</b> and paste below
+            </div>
+          </details>
 
-          <div style="border-top:1px solid var(--border);padding-top:8px;font-size:11px;font-family:var(--mono);color:var(--text3);letter-spacing:0.05em;text-transform:uppercase">Google Sheets (optional — to push rows directly)</div>
           <div class="sheets-input-row">
-            <div class="sheets-input-label">SHEETS API KEY</div>
-            <input class="sheets-input" type="password" id="gApiKeyInput" placeholder="AIzaSy... (same key usually works)">
+            <div class="sheets-input-label">APPS SCRIPT WEB APP URL</div>
+            <input class="sheets-input" type="text" id="appsScriptUrl" placeholder="https://script.google.com/macros/s/.../exec">
           </div>
           <div class="sheets-input-row">
             <div class="sheets-input-label">SPREADSHEET ID</div>
@@ -210,36 +277,31 @@ tbody tr:last-child td { border-bottom: none; }
             <div class="sheets-input-label">SHEET TAB NAME</div>
             <input class="sheets-input" type="text" id="sheetNameInput" placeholder="Sheet1" value="Sheet1">
           </div>
-          <button class="btn-connect" onclick="connectSheets()">Save & Connect</button>
-          <div style="font-size:11px;color:var(--text3);line-height:1.6">🔒 Keys stay in browser memory only — never stored or sent anywhere except Google APIs.</div>
+          <button class="btn-connect" onclick="connectSheets()">Connect Sheets</button>
         </div>
         <div id="connectedInfo" style="display:none;flex-direction:column;gap:8px">
           <div class="connected-info" id="connectedSheetId"></div>
           <div style="display:flex;align-items:center;justify-content:space-between">
-            <div style="font-size:12px;color:var(--text2)" id="connectedRowsSent">0 rows pushed to sheet</div>
+            <div style="font-size:12px;color:var(--text2)" id="connectedRowsSent">0 rows pushed</div>
             <button class="btn-disconnect" onclick="disconnectSheets()">Disconnect</button>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- ── Upload zone ── -->
     <div>
-      <div class="section-label">Upload document</div>
-      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
-        <input type="file" id="fileInput" accept="image/*,.pdf" onchange="handleFile(this.files[0])">
+      <div class="section-label">Upload documents</div>
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFiles(event)">
+        <input type="file" id="fileInput" accept="image/*,.pdf" multiple onchange="handleFiles(this.files)">
         <div class="icon">📋</div>
-        <h3 id="uploadHint">Drop your document here</h3>
-        <p>PDF, JPG, PNG supported</p>
+        <h3 id="uploadHint">Drop documents here</h3>
+        <p>PDF, JPG, PNG · select multiple files at once</p>
       </div>
-      <div class="file-preview" id="filePreview">
-        <div class="file-icon" id="fileIcon">📄</div>
-        <div>
-          <div class="file-name" id="fileName">—</div>
-          <div class="file-size" id="fileSize">—</div>
-        </div>
-        <button class="btn-remove" onclick="clearFile()">✕</button>
-      </div>
-      <img class="img-preview" id="imgPreview" alt="Preview">
+      <!-- File queue -->
+      <div id="fileQueue" class="file-queue" style="margin-top:8px"></div>
+      <!-- Image preview (single) -->
+      <img class="img-preview" id="imgPreview" alt="Preview" style="margin-top:8px">
     </div>
 
     <div class="or-row"><div class="or-line"></div><span class="or-text">OR</span><div class="or-line"></div></div>
@@ -252,11 +314,11 @@ tbody tr:last-child td { border-bottom: none; }
     <div class="error-box" id="errorBox"></div>
     <div class="success-box" id="successBox"></div>
 
-    <button class="btn-extract" id="extractBtn" onclick="extractDoc()" disabled>
+    <button class="btn-extract" id="extractBtn" onclick="extractAll()" disabled>
       <span id="btnLabel">Extract & preview</span>
     </button>
 
-    <div style="font-size:12px;color:var(--text3);text-align:center;line-height:1.6">Connect your sheet above to push rows directly, or download CSV anytime.</div>
+    <div style="font-size:12px;color:var(--text3);text-align:center;line-height:1.6">Connect Google Sheets above to push rows directly, or download CSV anytime.</div>
   </div>
 
   <div class="right">
@@ -267,23 +329,25 @@ tbody tr:last-child td { border-bottom: none; }
         <div class="sheets-sub" id="sheetsRowCount">0 rows · waiting for document</div>
       </div>
     </div>
+    <!-- Result tabs for multi-file -->
+    <div id="resultTabs" class="result-tabs" style="display:none"></div>
     <div id="mainContent">
       <div class="empty-state">
         <div class="empty-icon">📤</div>
         <h3>No document yet</h3>
-        <p>Select a document type above, upload a file or try the sample.<br>AI extracts the right fields for each type.</p>
+        <p>Select a document type above, upload one or more files, or try the sample.<br>AI extracts the right fields for each type.</p>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-/* ── Document type schemas ── */
+/* ═══════════════════════════════════════════════════
+   DOC TYPE SCHEMAS
+═══════════════════════════════════════════════════ */
 const DOC_TYPES = {
-  invoice: {
-    label:'Invoice', emoji:'🧾',
-    uploadHint:'Drop invoice here',
-    sampleLabel:'Use sample invoice',
+  invoice:{
+    label:'Invoice',emoji:'🧾',uploadHint:'Drop invoice here',sampleLabel:'Use sample invoice',
     prompt:`You are a professional accountant bot. Extract ALL details from this invoice and return ONLY valid JSON with no markdown.
 Return exactly:
 {"invoice_number":"string","invoice_date":"DD MMM YYYY","due_date":"DD MMM YYYY or null","vendor_name":"string","vendor_gst":"string or null","client_name":"string","line_items":[{"description":"string","amount":number}],"subtotal":number,"tax_percent":number,"tax_amount":number,"total_amount":number,"currency":"INR","payment_method":"string or null","payment_ref":"string or null","payment_status":"Paid or Unpaid or Partial","category":"Software or Services or Utilities or Office or Travel or Marketing or Other","notes":"string or null"}`,
@@ -306,23 +370,15 @@ Return exactly:
     renderLineItems:d=>d.line_items&&d.line_items.length?`<div class="line-items-section"><div class="line-items-header">Line items (${d.line_items.length})</div><table><thead><tr><th>Description</th><th style="text-align:right">Amount</th></tr></thead><tbody>${d.line_items.map(li=>`<tr><td>${esc(li.description)}</td><td class="td-amount">${fmt(li.amount)}</td></tr>`).join('')}</tbody></table></div>`:''
   },
 
-  bank: {
-    label:'Bank Statement', emoji:'🏦',
-    uploadHint:'Drop bank statement here',
-    sampleLabel:'Use sample bank statement',
+  bank:{
+    label:'Bank Statement',emoji:'🏦',uploadHint:'Drop bank statement here',sampleLabel:'Use sample bank statement',
     prompt:`You are a banking data extraction bot. Extract ALL transactions from this bank statement and return ONLY valid JSON with no markdown.
 Return exactly:
 {"bank_name":"string","account_number":"string","account_holder":"string","statement_period_from":"DD MMM YYYY","statement_period_to":"DD MMM YYYY","opening_balance":number,"closing_balance":number,"currency":"INR","transactions":[{"date":"DD MMM YYYY","description":"string","reference":"string or null","debit":number or null,"credit":number or null,"balance":number or null,"type":"UPI or NEFT or RTGS or IMPS or ATM or Cheque or Interest or Charge or Other"}],"total_debits":number,"total_credits":number,"notes":"string or null"}`,
     sampleText:`HDFC BANK Statement\nAccount: Priya Mehta  XXXX4821\nPeriod: 01 Mar 2025 – 31 Mar 2025\nOpening Balance: ₹52,340\n\n01 Mar  UPI/ZOMATO  UPI123  Dr ₹450    Bal ₹51,890\n03 Mar  NEFT/SALARY/TCS  NEFT8821  Cr ₹95,000  Bal ₹1,46,890\n05 Mar  ATM WITHDRAWAL  ATM449  Dr ₹5,000  Bal ₹1,41,890\n12 Mar  IMPS/ELECTRICITY  IMPS229  Dr ₹2,300  Bal ₹1,40,790\n20 Mar  CHEQUE/RENT  CHQ001  Dr ₹28,000  Bal ₹1,12,790\n28 Mar  INTEREST CREDIT  INT2025  Cr ₹312  Bal ₹1,13,102\n\nClosing: ₹1,13,102  Total Dr: ₹35,750  Total Cr: ₹96,512`,
     csvCols:['Bank','Account No','Account Holder','Period From','Period To','Date','Description','Reference','Debit','Credit','Balance','Txn Type','Opening Balance','Closing Balance','Currency'],
-    toCSVRow:d=>{
-      if(!d.transactions||!d.transactions.length) return [[d.bank_name,d.account_number,d.account_holder,d.statement_period_from,d.statement_period_to,'','','','','','','',d.opening_balance,d.closing_balance,d.currency||'INR']];
-      return d.transactions.map(t=>[d.bank_name,d.account_number,d.account_holder,d.statement_period_from,d.statement_period_to,t.date,t.description,t.reference,t.debit||'',t.credit||'',t.balance||'',t.type,d.opening_balance,d.closing_balance,d.currency||'INR']);
-    },
-    toSheetRow:d=>{
-      if(!d.transactions||!d.transactions.length) return [[d.bank_name||'',d.account_number||'',d.account_holder||'',d.statement_period_from||'',d.statement_period_to||'','','','','','','','',d.opening_balance||0,d.closing_balance||0,d.currency||'INR']];
-      return d.transactions.map(t=>[d.bank_name||'',d.account_number||'',d.account_holder||'',d.statement_period_from||'',d.statement_period_to||'',t.date||'',t.description||'',t.reference||'',t.debit||0,t.credit||0,t.balance||0,t.type||'',d.opening_balance||0,d.closing_balance||0,d.currency||'INR']);
-    },
+    toCSVRow:d=>{if(!d.transactions||!d.transactions.length)return[[d.bank_name,d.account_number,d.account_holder,d.statement_period_from,d.statement_period_to,'','','','','','','',d.opening_balance,d.closing_balance,d.currency||'INR']];return d.transactions.map(t=>[d.bank_name,d.account_number,d.account_holder,d.statement_period_from,d.statement_period_to,t.date,t.description,t.reference,t.debit||'',t.credit||'',t.balance||'',t.type,d.opening_balance,d.closing_balance,d.currency||'INR']);},
+    toSheetRow:d=>{if(!d.transactions||!d.transactions.length)return[[d.bank_name||'',d.account_number||'',d.account_holder||'',d.statement_period_from||'',d.statement_period_to||'','','','','','','','',d.opening_balance||0,d.closing_balance||0,d.currency||'INR']];return d.transactions.map(t=>[d.bank_name||'',d.account_number||'',d.account_holder||'',d.statement_period_from||'',d.statement_period_to||'',t.date||'',t.description||'',t.reference||'',t.debit||0,t.credit||0,t.balance||0,t.type||'',d.opening_balance||0,d.closing_balance||0,d.currency||'INR']);},
     renderCards:d=>`
       <div class="field-card highlight"><div class="field-label">Bank</div><div class="field-value">${esc(d.bank_name||'—')}</div></div>
       <div class="field-card highlight"><div class="field-label">Account holder</div><div class="field-value">${esc(d.account_holder||'—')}</div></div>
@@ -337,10 +393,8 @@ Return exactly:
     renderLineItems:d=>d.transactions&&d.transactions.length?`<div class="line-items-section"><div class="line-items-header">Transactions (${d.transactions.length})</div><table><thead><tr><th>Date</th><th>Description</th><th>Type</th><th style="text-align:right">Debit</th><th style="text-align:right">Credit</th><th style="text-align:right">Balance</th></tr></thead><tbody>${d.transactions.map(t=>`<tr><td style="white-space:nowrap">${esc(t.date)}</td><td>${esc(t.description)}</td><td><span style="font-size:11px;font-family:var(--mono);background:var(--bg);padding:2px 6px;border-radius:4px">${esc(t.type||'')}</span></td><td class="td-amount" style="color:var(--red)">${t.debit?fmt(t.debit):''}</td><td class="td-amount" style="color:var(--green)">${t.credit?fmt(t.credit):''}</td><td class="td-amount">${t.balance!=null?fmt(t.balance):''}</td></tr>`).join('')}</tbody></table></div>`:''
   },
 
-  flight: {
-    label:'Flight Ticket', emoji:'✈️',
-    uploadHint:'Drop flight ticket / e-ticket here',
-    sampleLabel:'Use sample flight ticket',
+  flight:{
+    label:'Flight Ticket',emoji:'✈️',uploadHint:'Drop flight ticket / e-ticket here',sampleLabel:'Use sample flight ticket',
     prompt:`You are a travel expense extraction bot. Extract ALL details from this flight ticket and return ONLY valid JSON with no markdown.
 Return exactly:
 {"booking_ref":"string","pnr":"string or null","passenger_name":"string","airline":"string","flight_number":"string","class":"Economy or Business or First or Premium Economy","origin_city":"string","origin_code":"IATA","destination_city":"string","destination_code":"IATA","departure_date":"DD MMM YYYY","departure_time":"HH:MM","arrival_date":"DD MMM YYYY","arrival_time":"HH:MM","duration_minutes":number or null,"stops":number,"baggage_allowance":"string or null","seat_number":"string or null","fare_amount":number,"taxes_fees":number or null,"total_amount":number,"currency":"INR","booking_platform":"string or null","ticket_type":"Domestic or International","status":"Confirmed or Cancelled or Waitlisted","notes":"string or null"}`,
@@ -364,10 +418,8 @@ Return exactly:
     renderLineItems:d=>`<div class="line-items-section"><div class="line-items-header">Fare breakdown</div><table><thead><tr><th>Component</th><th style="text-align:right">Amount</th></tr></thead><tbody><tr><td>Base fare</td><td class="td-amount">${fmt(d.fare_amount)}</td></tr>${d.taxes_fees?`<tr><td>Taxes & Fees</td><td class="td-amount">${fmt(d.taxes_fees)}</td></tr>`:''}<tr><td><b>Total paid</b></td><td class="td-amount"><b>${fmt(d.total_amount)}</b></td></tr></tbody></table></div>`
   },
 
-  receipt: {
-    label:'Receipt', emoji:'🧾',
-    uploadHint:'Drop receipt here',
-    sampleLabel:'Use sample receipt',
+  receipt:{
+    label:'Receipt',emoji:'🧾',uploadHint:'Drop receipt here',sampleLabel:'Use sample receipt',
     prompt:`You are a receipt parsing bot. Extract ALL details from this receipt and return ONLY valid JSON with no markdown.
 Return exactly:
 {"receipt_number":"string or null","date":"DD MMM YYYY","time":"HH:MM or null","merchant_name":"string","merchant_category":"Food and Dining or Groceries or Retail or Fuel or Healthcare or Entertainment or Transport or Utilities or Other","merchant_address":"string or null","items":[{"description":"string","qty":number,"unit_price":number,"amount":number}],"subtotal":number,"discount":number or null,"tax_amount":number or null,"tip":number or null,"total_amount":number,"currency":"INR","payment_method":"Cash or UPI or Card or Wallet or Other","card_last4":"string or null","status":"Paid or Refunded","notes":"string or null"}`,
@@ -388,23 +440,15 @@ Return exactly:
     renderLineItems:d=>d.items&&d.items.length?`<div class="line-items-section"><div class="line-items-header">Items (${d.items.length})</div><table><thead><tr><th>Item</th><th style="text-align:right">Qty</th><th style="text-align:right">Unit</th><th style="text-align:right">Amount</th></tr></thead><tbody>${d.items.map(it=>`<tr><td>${esc(it.description)}</td><td class="td-amount">${it.qty||1}</td><td class="td-amount">${fmt(it.unit_price)}</td><td class="td-amount">${fmt(it.amount)}</td></tr>`).join('')}</tbody></table></div>`:''
   },
 
-  expense: {
-    label:'Expense Report', emoji:'📊',
-    uploadHint:'Drop expense report here',
-    sampleLabel:'Use sample expense report',
+  expense:{
+    label:'Expense Report',emoji:'📊',uploadHint:'Drop expense report here',sampleLabel:'Use sample expense report',
     prompt:`You are an expense management bot. Extract ALL details from this expense report and return ONLY valid JSON with no markdown.
 Return exactly:
 {"report_id":"string or null","employee_name":"string","employee_id":"string or null","department":"string or null","report_title":"string","period_from":"DD MMM YYYY","period_to":"DD MMM YYYY","submitted_date":"DD MMM YYYY or null","approved_by":"string or null","expenses":[{"date":"DD MMM YYYY","category":"Travel or Meals or Accommodation or Office Supplies or Communication or Marketing or Other","description":"string","vendor":"string or null","amount":number,"currency":"INR","receipt_ref":"string or null","reimbursable":true}],"total_amount":number,"reimbursable_amount":number,"currency":"INR","status":"Draft or Submitted or Approved or Rejected or Paid","notes":"string or null"}`,
     sampleText:`EXPENSE REPORT — TCS\nReport ID: EXP-2025-0312  Employee: Anika Sharma  ID: TCS-4421  Dept: Business Dev\nPeriod: 10–12 Mar 2025  Submitted: 14 Mar 2025  Approved: Vikram Nair\n\n10 Mar  Travel  Flight BOM-HYD (IndiGo)  MakeMyTrip  ₹5,800\n10 Mar  Accommodation  Hotel Marriott Hyd  Marriott  ₹8,200\n11 Mar  Meals  Team dinner with client  ITC Kakatiya  ₹3,400\n11 Mar  Travel  Cab to client office  Ola  ₹380\n12 Mar  Meals  Working lunch  Hotel Marriott  ₹1,100\n12 Mar  Travel  Flight HYD-BOM  MakeMyTrip  ₹5,200\n\nTotal: ₹24,080  Reimbursable: ₹24,080  Status: APPROVED`,
     csvCols:['Report ID','Employee','Employee ID','Department','Report Title','Period From','Period To','Submitted','Approved By','Date','Category','Description','Vendor','Amount','Currency','Receipt Ref','Reimbursable','Total Amount','Reimbursable Amt','Status','Notes'],
-    toCSVRow:d=>{
-      if(!d.expenses||!d.expenses.length) return [[d.report_id,d.employee_name,d.employee_id,d.department,d.report_title,d.period_from,d.period_to,d.submitted_date,d.approved_by,'','','','','','','','',d.total_amount,d.reimbursable_amount,d.status,d.notes]];
-      return d.expenses.map(e=>[d.report_id,d.employee_name,d.employee_id,d.department,d.report_title,d.period_from,d.period_to,d.submitted_date,d.approved_by,e.date,e.category,e.description,e.vendor,e.amount,e.currency||'INR',e.receipt_ref,e.reimbursable?'Yes':'No',d.total_amount,d.reimbursable_amount,d.status,d.notes]);
-    },
-    toSheetRow:d=>{
-      if(!d.expenses||!d.expenses.length) return [[d.report_id||'',d.employee_name||'',d.employee_id||'',d.department||'',d.report_title||'',d.period_from||'',d.period_to||'',d.submitted_date||'',d.approved_by||'','','','','','','','','',d.total_amount||0,d.reimbursable_amount||0,d.status||'',d.notes||'']];
-      return d.expenses.map(e=>[d.report_id||'',d.employee_name||'',d.employee_id||'',d.department||'',d.report_title||'',d.period_from||'',d.period_to||'',d.submitted_date||'',d.approved_by||'',e.date||'',e.category||'',e.description||'',e.vendor||'',e.amount||0,e.currency||'INR',e.receipt_ref||'',e.reimbursable?'Yes':'No',d.total_amount||0,d.reimbursable_amount||0,d.status||'',d.notes||'']);
-    },
+    toCSVRow:d=>{if(!d.expenses||!d.expenses.length)return[[d.report_id,d.employee_name,d.employee_id,d.department,d.report_title,d.period_from,d.period_to,d.submitted_date,d.approved_by,'','','','','','','','',d.total_amount,d.reimbursable_amount,d.status,d.notes]];return d.expenses.map(e=>[d.report_id,d.employee_name,d.employee_id,d.department,d.report_title,d.period_from,d.period_to,d.submitted_date,d.approved_by,e.date,e.category,e.description,e.vendor,e.amount,e.currency||'INR',e.receipt_ref,e.reimbursable?'Yes':'No',d.total_amount,d.reimbursable_amount,d.status,d.notes]);},
+    toSheetRow:d=>{if(!d.expenses||!d.expenses.length)return[[d.report_id||'',d.employee_name||'',d.employee_id||'',d.department||'',d.report_title||'',d.period_from||'',d.period_to||'',d.submitted_date||'',d.approved_by||'','','','','','','','','',d.total_amount||0,d.reimbursable_amount||0,d.status||'',d.notes||'']];return d.expenses.map(e=>[d.report_id||'',d.employee_name||'',d.employee_id||'',d.department||'',d.report_title||'',d.period_from||'',d.period_to||'',d.submitted_date||'',d.approved_by||'',e.date||'',e.category||'',e.description||'',e.vendor||'',e.amount||0,e.currency||'INR',e.receipt_ref||'',e.reimbursable?'Yes':'No',d.total_amount||0,d.reimbursable_amount||0,d.status||'',d.notes||'']);},
     renderCards:d=>`
       <div class="field-card highlight"><div class="field-label">Employee</div><div class="field-value">${esc(d.employee_name||'—')}</div>${d.department?`<div class="confidence high">${esc(d.department)}</div>`:''}</div>
       <div class="field-card highlight"><div class="field-label">Total amount</div><div class="field-value amount">${fmt(d.total_amount)}</div></div>
@@ -418,18 +462,27 @@ Return exactly:
   }
 };
 
-/* ── State ── */
-let currentType = 'invoice';
-let currentFile = null, currentBase64 = null, isSample = false;
-let rowCount = 0, allExtracted = [];
-let geminiKey = null, gApiKey = null, sheetsSpreadsheetId = null, sheetsSheetName = 'Sheet1';
-let geminiModel = 'gemini-2.0-flash';
-let sheetsConnected = false, sheetsRowsPushed = 0;
+/* ═══════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════ */
+const GEMINI_MODEL = 'gemini-3.1-flash-lite';
 
-/* ── Init ── */
+let currentType = 'invoice';
+let fileQueue = []; // [{file, name, size, base64, status, data, error}]
+let isSample = false;
+let rowCount = 0;
+let allExtracted = [];
+let geminiKey = null;
+let appsScriptUrl = null, sheetsSpreadsheetId = null, sheetsSheetName = 'Sheet1';
+let sheetsConnected = false, sheetsRowsPushed = 0;
+let activeResultIdx = 0;
+
+/* ═══════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════ */
 function init() {
   const bar = document.getElementById('typeBar');
-  bar.innerHTML = Object.entries(DOC_TYPES).map(([key,t],i) =>
+  bar.innerHTML = Object.entries(DOC_TYPES).map(([key,t]) =>
     `<button class="type-btn ${key===currentType?'active':''}" onclick="selectType('${key}')" id="typeBtn_${key}"><span class="type-emoji">${t.emoji}</span>${t.label}</button>`
   ).join('');
   updateHints();
@@ -439,10 +492,11 @@ function selectType(key) {
   currentType = key;
   document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('typeBtn_'+key).classList.add('active');
-  clearFile();
+  clearQueue();
   updateHints();
   const t = DOC_TYPES[key];
-  document.getElementById('mainContent').innerHTML = `<div class="empty-state"><div class="empty-icon">${t.emoji}</div><h3>Ready for ${t.label}</h3><p>Upload a file or try the sample. Columns will be tailored for this document type.</p></div>`;
+  document.getElementById('mainContent').innerHTML = `<div class="empty-state"><div class="empty-icon">${t.emoji}</div><h3>Ready for ${t.label}</h3><p>Upload one or more files, or try the sample.</p></div>`;
+  document.getElementById('resultTabs').style.display = 'none';
 }
 
 function updateHints() {
@@ -451,269 +505,296 @@ function updateHints() {
   document.getElementById('sampleBtn').textContent = t.sampleLabel;
 }
 
-/* ── File handling ── */
-function dragOver(e) { e.preventDefault(); document.getElementById('uploadZone').classList.add('drag'); }
-function dragLeave() { document.getElementById('uploadZone').classList.remove('drag'); }
-function dropFile(e) { e.preventDefault(); document.getElementById('uploadZone').classList.remove('drag'); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); }
-
-function handleFile(file) {
-  if(!file) return;
-  isSample=false; currentFile=file;
-  document.getElementById('fileName').textContent=file.name;
-  document.getElementById('fileSize').textContent=(file.size/1024).toFixed(1)+' KB';
-  document.getElementById('fileIcon').textContent=file.type==='application/pdf'?'📄':'🖼️';
-  document.getElementById('filePreview').classList.add('visible');
-  document.getElementById('uploadZone').style.display='none';
-  const imgPrev=document.getElementById('imgPreview');
-  if(file.type.startsWith('image/')) {
-    const r=new FileReader(); r.onload=e=>{imgPrev.src=e.target.result;imgPrev.classList.add('visible');currentBase64=e.target.result.split(',')[1];}; r.readAsDataURL(file);
-  } else {
-    imgPrev.classList.remove('visible');
-    const r=new FileReader(); r.onload=e=>{currentBase64=e.target.result.split(',')[1];}; r.readAsDataURL(file);
-  }
-  document.getElementById('extractBtn').disabled=false;
-  setStep(2);
-}
-
-function clearFile() {
-  currentFile=null;currentBase64=null;isSample=false;
-  document.getElementById('filePreview').classList.remove('visible');
-  document.getElementById('imgPreview').classList.remove('visible');
-  document.getElementById('uploadZone').style.display='';
-  document.getElementById('extractBtn').disabled=true;
-  document.getElementById('fileInput').value='';
-  hideMessages(); setStep(1);
-}
-
-function loadSample() {
-  isSample=true;currentFile=null;currentBase64=null;
-  document.getElementById('extractBtn').disabled=false;
-  document.getElementById('filePreview').classList.remove('visible');
-  document.getElementById('imgPreview').classList.remove('visible');
-  document.getElementById('uploadZone').style.display='none';
-  document.getElementById('fileName').textContent=`sample_${currentType}.txt`;
-  document.getElementById('fileSize').textContent='sample';
-  document.getElementById('fileIcon').textContent=DOC_TYPES[currentType].emoji;
-  document.getElementById('filePreview').classList.add('visible');
-  setStep(2);
-}
-
-/* ── Sheets connect ── */
-/* ── Gemini API test + model fetch ── */
-let geminiModelsTested = false;
-
-function resetGeminiStatus() {
-  geminiModelsTested = false;
-  geminiModel = null;
-  document.getElementById('geminiStatus').textContent = 'Not connected';
-  document.getElementById('geminiStatus').style.background = '#ede8fb';
-  document.getElementById('geminiStatus').style.color = 'var(--purple)';
-  document.getElementById('modelSelect').innerHTML = '<option value="">— Test API key first —</option>';
-  document.getElementById('modelSelect').disabled = true;
-  document.getElementById('modelLoadingHint').textContent = '(test API key to load models)';
-  const res = document.getElementById('geminiTestResult');
-  res.style.display = 'none';
-}
-
-async function testGeminiAPI() {
+/* ═══════════════════════════════════════════════════
+   GEMINI KEY
+═══════════════════════════════════════════════════ */
+function saveGeminiKey() {
   const key = document.getElementById('geminiKeyInput').value.trim();
-  if (!key) { showError('Please enter your Gemini API key first.'); return; }
-
-  const btn = document.getElementById('testApiBtn');
-  const label = document.getElementById('testApiLabel');
-  const resultBox = document.getElementById('geminiTestResult');
-  btn.disabled = true;
-  label.textContent = '⏳ Fetching models…';
-  resultBox.style.display = 'none';
-
-  try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}&pageSize=100`);
-    if (!res.ok) {
-      let msg = 'API error ' + res.status;
-      try { const e = await res.json(); msg = e.error?.message || msg; } catch(e) {}
-      throw new Error(msg);
-    }
-    const data = await res.json();
-
-    // Filter: generateContent capable only, strip deprecated versioned models (-001, -002 etc.)
-    // and non-generative model types
-    const DEPRECATED_RE = /-(00[1-9]|0[1-9][0-9])$|legacy|aqa|embedding|retrieval/i;
-    const allModels = (data.models || []).filter(m => {
-      if (!m.supportedGenerationMethods?.includes('generateContent')) return false;
-      const id = m.name.replace('models/', '');
-      if (!id.startsWith('gemini-')) return false;
-      if (DEPRECATED_RE.test(id)) return false;
-      return true;
-    });
-
-    if (!allModels.length) throw new Error('No usable Gemini models found for this key. It may be restricted or invalid.');
-
-    // Sort best-first: gemini-2.x flash > gemini-1.5 flash > other flash > flash-lite > pro > rest
-    const priority = m => {
-      const n = m.name.toLowerCase();
-      if (/gemini-2\.[0-9]/.test(n) && n.includes('flash') && !n.includes('lite')) return 0;
-      if (/gemini-1\.5/.test(n) && n.includes('flash') && !n.includes('lite')) return 1;
-      if (n.includes('flash') && !n.includes('lite')) return 2;
-      if (n.includes('flash-lite')) return 3;
-      if (/gemini-2\.[0-9]/.test(n) && n.includes('pro')) return 4;
-      if (n.includes('pro')) return 5;
-      return 6;
-    };
-    allModels.sort((a, b) => priority(a) - priority(b));
-
-    const sel = document.getElementById('modelSelect');
-    sel.innerHTML = '';
-    allModels.forEach(m => {
-      const id = m.name.replace('models/', '');
-      const opt = document.createElement('option');
-      opt.value = id;
-      opt.textContent = m.displayName || id;
-      sel.appendChild(opt);
-    });
-    sel.disabled = false;
-    sel.style.cursor = 'pointer';
-    sel.style.color = 'var(--text)';
-
-    // Auto-select top of sorted list (already best model first)
-    sel.selectedIndex = 0;
-    geminiModel = sel.value;
-    sel.onchange = () => { geminiModel = sel.value; };
-
-    geminiModelsTested = true;
-    geminiKey = key;
-    document.getElementById('geminiStatus').textContent = '✓ Connected';
-    document.getElementById('geminiStatus').style.background = 'var(--green-light)';
-    document.getElementById('geminiStatus').style.color = 'var(--green)';
-    document.getElementById('modelLoadingHint').textContent = `(${allModels.length} models loaded)`;
-
-    resultBox.style.display = 'block';
-    resultBox.style.background = 'var(--green-light)';
-    resultBox.style.border = '1px solid var(--green-mid)';
-    resultBox.style.color = 'var(--green)';
-    resultBox.innerHTML = `✅ <b>API key valid!</b> ${allModels.length} models available. Selected: <b>${geminiModel}</b>`;
-
-  } catch(e) {
-    resultBox.style.display = 'block';
-    resultBox.style.background = 'var(--red-light)';
-    resultBox.style.border = '1px solid #f5c6c0';
-    resultBox.style.color = 'var(--red)';
-    resultBox.innerHTML = `❌ <b>Connection failed:</b> ${e.message}. Check your API key and try again.`;
-    document.getElementById('geminiStatus').textContent = '✗ Error';
-    document.getElementById('geminiStatus').style.background = 'var(--red-light)';
-    document.getElementById('geminiStatus').style.color = 'var(--red)';
-  } finally {
-    btn.disabled = false;
-    label.textContent = '🔍 Test API & Fetch Models';
-  }
+  if (!key) { showError('Please enter your Gemini API key.'); return; }
+  geminiKey = key;
+  document.getElementById('geminiForm').style.display = 'none';
+  document.getElementById('geminiConnectedInfo').style.display = 'flex';
+  document.getElementById('geminiStatus').className = 'connect-status connected';
+  document.getElementById('geminiStatus').textContent = 'Key saved ✓';
+  updateExtractBtn();
+  showSuccess('✅ Gemini API key saved! Using gemini-3.1-flash-lite.');
 }
 
+function clearGeminiKey() {
+  geminiKey = null;
+  document.getElementById('geminiForm').style.display = 'flex';
+  document.getElementById('geminiConnectedInfo').style.display = 'none';
+  document.getElementById('geminiStatus').className = 'connect-status disconnected';
+  document.getElementById('geminiStatus').textContent = 'Not set';
+  document.getElementById('geminiKeyInput').value = '';
+  updateExtractBtn();
+}
+
+/* ═══════════════════════════════════════════════════
+   SHEETS CONNECT (Apps Script OAuth method)
+═══════════════════════════════════════════════════ */
 function connectSheets() {
-  const gKey=document.getElementById('geminiKeyInput').value.trim();
-  const sKey=document.getElementById('gApiKeyInput').value.trim();
-  const id=document.getElementById('sheetIdInput').value.trim();
-  const name=document.getElementById('sheetNameInput').value.trim()||'Sheet1';
-  if(!gKey) { showError('Please enter your Gemini API key to enable AI extraction.'); return; }
-  if(!geminiModelsTested) { showError('Please test your Gemini API key first and select a model before connecting.'); return; }
-  geminiKey=gKey; gApiKey=sKey||gKey; sheetsSpreadsheetId=id; sheetsSheetName=name;
-  sheetsConnected=!!id;
-  document.getElementById('connectStatus').className='connect-status connected';
-  document.getElementById('connectStatus').textContent= id ? 'Connected ✓' : 'Gemini ready ✓';
-  document.getElementById('connectForm').style.display='none';
-  document.getElementById('connectedInfo').style.display='flex';
-  document.getElementById('connectedSheetId').textContent= id ? `📊 ${id.slice(0,24)}… / ${name}` : `✨ Gemini (${geminiModel}) ready · No sheet linked`;
-  document.getElementById('connectedRowsSent').textContent='0 rows pushed to sheet';
-  showSuccess(id ? `Connected! Using ${geminiModel}. Extract a document then push to Sheets.` : `Gemini key saved (${geminiModel})! You can extract documents now. Add a Spreadsheet ID to enable direct push.`);
+  const url = document.getElementById('appsScriptUrl').value.trim();
+  const id = document.getElementById('sheetIdInput').value.trim();
+  const name = document.getElementById('sheetNameInput').value.trim() || 'Sheet1';
+  if (!url) { showError('Please enter the Apps Script Web App URL to enable direct push to Sheets.'); return; }
+  if (!id) { showError('Please enter your Spreadsheet ID.'); return; }
+  appsScriptUrl = url; sheetsSpreadsheetId = id; sheetsSheetName = name;
+  sheetsConnected = true;
+  document.getElementById('connectStatus').className = 'connect-status connected';
+  document.getElementById('connectStatus').textContent = 'Connected ✓';
+  document.getElementById('connectForm').style.display = 'none';
+  document.getElementById('connectedInfo').style.display = 'flex';
+  document.getElementById('connectedSheetId').textContent = `📊 ${id.slice(0,24)}… / ${name}`;
+  document.getElementById('connectedRowsSent').textContent = '0 rows pushed';
+  showSuccess('✅ Google Sheets connected via Apps Script!');
 }
 
 function disconnectSheets() {
-  geminiKey=null;gApiKey=null;sheetsSpreadsheetId=null;sheetsConnected=false;sheetsRowsPushed=0;
-  geminiModelsTested=false; geminiModel=null;
-  document.getElementById('connectStatus').className='connect-status disconnected';
-  document.getElementById('connectStatus').textContent='Not connected';
-  document.getElementById('connectForm').style.display='flex';
-  document.getElementById('connectedInfo').style.display='none';
-  resetGeminiStatus();
+  appsScriptUrl = null; sheetsSpreadsheetId = null; sheetsConnected = false; sheetsRowsPushed = 0;
+  document.getElementById('connectStatus').className = 'connect-status disconnected';
+  document.getElementById('connectStatus').textContent = 'Not connected';
+  document.getElementById('connectForm').style.display = 'flex';
+  document.getElementById('connectedInfo').style.display = 'none';
 }
 
-/* ── Extraction ── */
-async function extractDoc() {
-  hideMessages();
-  const btn=document.getElementById('extractBtn');
-  const label=document.getElementById('btnLabel');
-  btn.disabled=true; label.textContent='';
-  const sp=document.createElement('div'); sp.className='spinner'; btn.appendChild(sp);
-  try {
-    const data=await callAPI();
-    rowCount++;
-    allExtracted.push({type:currentType,data});
-    renderResult(data,currentType);
-    setStep(3);
-    document.getElementById('sheetsRowCount').textContent=`${rowCount} row${rowCount>1?'s':''} extracted`;
-  } catch(e) {
-    showError('Extraction failed: '+e.message);
-    console.error(e);
-  } finally {
-    btn.disabled=false; btn.removeChild(sp);
-    label.textContent='Extract another';
-    btn.onclick=()=>{clearFile();btn.onclick=extractDoc;};
+/* ═══════════════════════════════════════════════════
+   FILE HANDLING — MULTI-FILE QUEUE
+═══════════════════════════════════════════════════ */
+function dragOver(e) { e.preventDefault(); document.getElementById('uploadZone').classList.add('drag'); }
+function dragLeave() { document.getElementById('uploadZone').classList.remove('drag'); }
+function dropFiles(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('drag');
+  if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+}
+
+function handleFiles(files) {
+  isSample = false;
+  for (const file of files) {
+    if (!file.type.match(/^image\/|application\/pdf/)) continue;
+    const item = { file, name: file.name, size: file.size, base64: null, status: 'pending', data: null, error: null };
+    fileQueue.push(item);
+    readFileBase64(item);
+  }
+  renderQueue();
+  updateExtractBtn();
+  setStep(fileQueue.length > 0 ? 2 : 1);
+}
+
+function readFileBase64(item) {
+  const r = new FileReader();
+  r.onload = e => {
+    item.base64 = e.target.result.split(',')[1];
+    // Show image preview for single image
+    if (fileQueue.length === 1 && item.file.type.startsWith('image/')) {
+      const img = document.getElementById('imgPreview');
+      img.src = e.target.result;
+      img.classList.add('visible');
+    }
+  };
+  r.readAsDataURL(item.file);
+}
+
+function removeFile(idx) {
+  fileQueue.splice(idx, 1);
+  renderQueue();
+  updateExtractBtn();
+  if (fileQueue.length === 0) {
+    document.getElementById('imgPreview').classList.remove('visible');
+    setStep(1);
   }
 }
 
-async function callAPI() {
-  const t = DOC_TYPES[currentType];
-  if (!geminiKey) throw new Error('Please enter your Gemini API key and click "Test API & Fetch Models", then Save & Connect.');
-  if (!geminiModelsTested) throw new Error('Please test your API key first — click "Test API & Fetch Models" in the connection panel.');
+function clearQueue() {
+  fileQueue = [];
+  isSample = false;
+  renderQueue();
+  document.getElementById('imgPreview').classList.remove('visible');
+  document.getElementById('fileInput').value = '';
+  updateExtractBtn();
+  hideMessages();
+  setStep(1);
+}
 
-  const selectedModel = document.getElementById('modelSelect')?.value || geminiModel || 'gemini-2.0-flash';
+function renderQueue() {
+  const qEl = document.getElementById('fileQueue');
+  const zone = document.getElementById('uploadZone');
+  if (fileQueue.length === 0) {
+    qEl.innerHTML = '';
+    zone.style.display = '';
+    return;
+  }
+  zone.style.display = fileQueue.length >= 5 ? 'none' : '';
+  qEl.innerHTML = fileQueue.map((item, i) => `
+    <div class="file-item" id="fitem_${i}">
+      <div class="file-item-icon">${item.file.type === 'application/pdf' ? '📄' : '🖼️'}</div>
+      <div class="file-item-info">
+        <div class="file-item-name">${esc(item.name)}</div>
+        <div class="file-item-meta">${(item.size/1024).toFixed(1)} KB</div>
+      </div>
+      <span class="file-item-status ${item.status}">${statusLabel(item.status)}</span>
+      ${item.status === 'pending' ? `<button class="btn-remove-file" onclick="removeFile(${i})">✕</button>` : ''}
+    </div>
+  `).join('');
+}
+
+function statusLabel(s) {
+  return {pending:'⏳ Queued', processing:'⚡ Processing…', done:'✅ Done', error:'❌ Error'}[s] || s;
+}
+
+function updateExtractBtn() {
+  const hasFiles = isSample || fileQueue.length > 0;
+  const hasKey = !!geminiKey;
+  const btn = document.getElementById('extractBtn');
+  btn.disabled = !(hasFiles && hasKey);
+  const count = fileQueue.filter(f=>f.status==='pending').length;
+  document.getElementById('btnLabel').textContent = isSample
+    ? 'Extract sample'
+    : count > 1 ? `Extract ${count} files` : 'Extract & preview';
+}
+
+/* ═══════════════════════════════════════════════════
+   SAMPLE
+═══════════════════════════════════════════════════ */
+function loadSample() {
+  clearQueue();
+  isSample = true;
+  document.getElementById('uploadZone').style.display = 'none';
+  document.getElementById('fileQueue').innerHTML = `
+    <div class="file-item">
+      <div class="file-item-icon">${DOC_TYPES[currentType].emoji}</div>
+      <div class="file-item-info">
+        <div class="file-item-name">sample_${currentType}.txt</div>
+        <div class="file-item-meta">sample document</div>
+      </div>
+      <span class="file-item-status pending">⏳ Ready</span>
+      <button class="btn-remove-file" onclick="clearQueue()">✕</button>
+    </div>`;
+  updateExtractBtn();
+  setStep(2);
+}
+
+/* ═══════════════════════════════════════════════════
+   EXTRACTION — BATCH
+═══════════════════════════════════════════════════ */
+async function extractAll() {
+  hideMessages();
+  const btn = document.getElementById('extractBtn');
+  btn.disabled = true;
+
+  if (isSample) {
+    await extractSingle(null, true);
+  } else {
+    const pending = fileQueue.filter(f => f.status === 'pending');
+    if (!pending.length) { showError('No pending files to extract.'); btn.disabled = false; return; }
+
+    // Show batch progress in right panel if >1
+    if (pending.length > 1) showBatchProgress(pending);
+
+    for (let i = 0; i < fileQueue.length; i++) {
+      const item = fileQueue[i];
+      if (item.status !== 'pending') continue;
+      item.status = 'processing';
+      renderQueue();
+      updateBatchItem(i, 'processing');
+      try {
+        const data = await callAPI(item);
+        item.status = 'done';
+        item.data = data;
+        rowCount++;
+        allExtracted.push({ type: currentType, data, name: item.name });
+      } catch (e) {
+        item.status = 'error';
+        item.error = e.message;
+      }
+      renderQueue();
+      updateBatchItem(i, item.status);
+    }
+    renderResults();
+  }
+
+  updateExtractBtn();
+  setStep(3);
+  document.getElementById('sheetsRowCount').textContent = `${rowCount} row${rowCount!==1?'s':''} extracted`;
+
+  const doneCount = fileQueue.filter(f=>f.status==='done').length;
+  const errCount = fileQueue.filter(f=>f.status==='error').length;
+  if (doneCount > 0) showSuccess(`✅ ${doneCount} file${doneCount>1?'s':''} extracted!${errCount>0?' '+errCount+' failed.':''}`);
+  if (errCount > 0 && doneCount === 0) showError(`❌ All ${errCount} files failed. Check your API key and file types.`);
+}
+
+async function extractSingle(item, sample) {
+  const sp = document.createElement('div'); sp.className = 'spinner';
+  document.getElementById('extractBtn').appendChild(sp);
+  document.getElementById('btnLabel').textContent = 'Extracting…';
+  try {
+    const data = await callAPI(item);
+    rowCount++;
+    allExtracted.push({ type: currentType, data, name: sample ? 'sample' : item.name });
+    renderSingleResult(data, currentType, allExtracted.length - 1);
+  } catch (e) {
+    showError('Extraction failed: ' + e.message);
+  } finally {
+    document.getElementById('extractBtn').removeChild(sp);
+    document.getElementById('btnLabel').textContent = 'Extract another';
+    document.getElementById('extractBtn').onclick = () => { clearQueue(); isSample=false; document.getElementById('uploadZone').style.display=''; updateExtractBtn(); document.getElementById('extractBtn').onclick=extractAll; };
+    document.getElementById('extractBtn').disabled = false;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   API CALL
+═══════════════════════════════════════════════════ */
+async function callAPI(item) {
+  const t = DOC_TYPES[currentType];
+  if (!geminiKey) throw new Error('Please save your Gemini API key first.');
 
   const parts = [];
 
   if (isSample) {
     parts.push({ text: t.prompt + '\n\nDocument:\n' + t.sampleText });
-  } else if (currentFile && currentFile.type.startsWith('image/')) {
-    parts.push({ inline_data: { mime_type: currentFile.type, data: currentBase64 } });
-    parts.push({ text: t.prompt });
-  } else if (currentBase64) {
-    const fileUri = await uploadToGeminiFileAPI(currentBase64, 'application/pdf', currentFile.name || 'document.pdf');
-    parts.push({ file_data: { mime_type: 'application/pdf', file_uri: fileUri } });
+  } else if (item.file.type.startsWith('image/')) {
+    parts.push({ inline_data: { mime_type: item.file.type, data: item.base64 } });
     parts.push({ text: t.prompt });
   } else {
-    throw new Error('No file selected.');
+    const fileUri = await uploadToGeminiFileAPI(item.base64, 'application/pdf', item.name);
+    parts.push({ file_data: { mime_type: 'application/pdf', file_uri: fileUri } });
+    parts.push({ text: t.prompt });
   }
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${geminiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${geminiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts }],
-        generationConfig: { temperature: 0, maxOutputTokens: 2000 }
-      })
+      body: JSON.stringify({ contents: [{ parts }], generationConfig: { temperature: 0, maxOutputTokens: 2000 } })
     }
   );
 
   if (!res.ok) {
     let msg = 'Gemini API error ' + res.status;
     try { const e = await res.json(); msg = e.error?.message || msg; } catch(e) {}
-    if (res.status === 400) msg += '. Try selecting a different model in the connection panel.';
-    if (res.status === 403) msg += '. Check your API key has access to this model.';
+    if (res.status === 403) msg = 'API key is invalid or has no permission to use Gemini.';
+    if (res.status === 429) msg = 'Rate limit hit — wait a moment and try again.';
     throw new Error(msg);
   }
 
   const resp = await res.json();
   const text = resp.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  if (!text) throw new Error('Gemini returned an empty response. Try a different model in the connection panel.');
+  if (!text) throw new Error('Gemini returned an empty response.');
   const clean = text.replace(/```json[\s\S]*?```|```[\s\S]*?```/g, m => m.replace(/```json|```/g,'')).replace(/```/g,'').trim();
   try {
     return JSON.parse(clean);
   } catch(e) {
-    throw new Error('Failed to parse Gemini response as JSON. Try again or switch to a different model.');
+    throw new Error('Could not parse Gemini response as JSON. Try a clearer document.');
   }
 }
 
+/* ═══════════════════════════════════════════════════
+   GEMINI FILE UPLOAD
+═══════════════════════════════════════════════════ */
 async function uploadToGeminiFileAPI(base64Data, mimeType, displayName) {
-  // Step 1: initiate resumable upload
   const initRes = await fetch(
     `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${geminiKey}`,
     {
@@ -734,36 +815,68 @@ async function uploadToGeminiFileAPI(base64Data, mimeType, displayName) {
   }
   const uploadUrl = initRes.headers.get('X-Goog-Upload-URL');
   if (!uploadUrl) throw new Error('No upload URL returned from Gemini File API.');
-
-  // Step 2: upload the binary data
   const binary = atob(base64Data);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-
   const uploadRes = await fetch(uploadUrl, {
     method: 'POST',
-    headers: {
-      'Content-Length': bytes.length,
-      'X-Goog-Upload-Offset': '0',
-      'X-Goog-Upload-Command': 'upload, finalize'
-    },
+    headers: { 'Content-Length': bytes.length, 'X-Goog-Upload-Offset': '0', 'X-Goog-Upload-Command': 'upload, finalize' },
     body: bytes
   });
-  if (!uploadRes.ok) {
-    throw new Error('File upload to Gemini failed: ' + uploadRes.status);
-  }
+  if (!uploadRes.ok) throw new Error('File upload to Gemini failed: ' + uploadRes.status);
   const fileInfo = await uploadRes.json();
   return fileInfo.file?.uri || fileInfo.uri;
 }
 
-/* ── Render ── */
-function renderResult(d,typeKey) {
-  const t=DOC_TYPES[typeKey];
-  const sheetRows=t.toSheetRow(d);
-  const firstRow=Array.isArray(sheetRows[0])?sheetRows[0]:sheetRows;
-  const displayVals=firstRow.map(v=>v===null||v===undefined?'—':String(v));
+/* ═══════════════════════════════════════════════════
+   RENDER — MULTI-FILE TABS
+═══════════════════════════════════════════════════ */
+function showBatchProgress(items) {
+  document.getElementById('mainContent').innerHTML = `
+    <div class="batch-progress">
+      <div class="batch-header">🔄 Processing ${items.length} files…</div>
+      ${items.map((item,i) => `
+        <div class="batch-item" id="batch_${i}">
+          <span style="font-size:14px">${item.file.type==='application/pdf'?'📄':'🖼️'}</span>
+          <div class="batch-item-name">${esc(item.name)}</div>
+          <span class="batch-item-status pending" id="bstatus_${i}">⏳ Queued</span>
+        </div>
+      `).join('')}
+    </div>`;
+}
 
-  document.getElementById('mainContent').innerHTML=`
+function updateBatchItem(idx, status) {
+  const el = document.getElementById('bstatus_'+idx);
+  if (el) { el.className = 'batch-item-status ' + status; el.textContent = statusLabel(status); }
+}
+
+function renderResults() {
+  const done = allExtracted.filter(e => e.data);
+  if (!done.length) return;
+
+  // Build tabs if >1
+  if (done.length > 1) {
+    const tabsEl = document.getElementById('resultTabs');
+    tabsEl.style.display = 'flex';
+    tabsEl.innerHTML = done.map((e,i) => `<button class="result-tab ${i===done.length-1?'active':''}" onclick="showResultTab(${i})">${esc(e.name.length>20?e.name.slice(0,18)+'…':e.name)}</button>`).join('');
+  }
+  showResultTab(done.length - 1);
+}
+
+function showResultTab(idx) {
+  activeResultIdx = idx;
+  document.querySelectorAll('.result-tab').forEach((t,i)=>{t.classList.toggle('active',i===idx);});
+  const e = allExtracted.filter(e=>e.data)[idx];
+  if (e) renderSingleResult(e.data, e.type, idx);
+}
+
+function renderSingleResult(d, typeKey, idx) {
+  const t = DOC_TYPES[typeKey];
+  const sheetRows = t.toSheetRow(d);
+  const firstRow = Array.isArray(sheetRows[0]) ? sheetRows[0] : sheetRows;
+  const displayVals = firstRow.map(v => v===null||v===undefined ? '—' : String(v));
+
+  document.getElementById('mainContent').innerHTML = `
     <div style="display:flex;flex-direction:column;gap:14px">
       <div class="fields-grid">${t.renderCards(d)}</div>
       ${t.renderLineItems(d)}
@@ -782,68 +895,87 @@ function renderResult(d,typeKey) {
           ${sheetsConnected?'📤 Push to Sheets':'🔗 Connect Sheets first'}
         </button>
       </div>
-      ${!sheetsConnected?`<div style="font-size:12px;color:var(--text3);text-align:center">Connect Google Sheets on the left panel to enable direct push ↑</div>`:''}
+      ${!sheetsConnected?`<div style="font-size:12px;color:var(--text3);text-align:center">Connect Google Sheets on the left to enable direct push ↑</div>`:''}
     </div>`;
 
-  window._lastDisplayVals=displayVals;
-  window._lastSheetCols=t.csvCols;
-  window._lastExtracted={type:typeKey,data:d};
+  window._lastDisplayVals = displayVals;
+  window._lastSheetCols = t.csvCols;
+  window._lastExtracted = { type: typeKey, data: d };
 }
 
-/* ── Actions ── */
+/* ═══════════════════════════════════════════════════
+   ACTIONS
+═══════════════════════════════════════════════════ */
 function copyRowCSV() {
-  if(!window._lastSheetCols) return;
-  const header=window._lastSheetCols.map(c=>`"${c}"`).join(',');
-  const row=window._lastDisplayVals.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',');
+  if (!window._lastSheetCols) return;
+  const header = window._lastSheetCols.map(c=>`"${c}"`).join(',');
+  const row = window._lastDisplayVals.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',');
   navigator.clipboard.writeText(header+'\n'+row).then(()=>showSuccess('✅ Row copied to clipboard as CSV!'));
 }
 
 function downloadCSV() {
-  if(!allExtracted.length) return;
-  const typeKey=allExtracted[allExtracted.length-1].type;
-  const t=DOC_TYPES[typeKey];
-  const header=t.csvCols.map(c=>`"${c}"`).join(',');
-  const rows=[];
+  if (!allExtracted.length) return;
+  const typeKey = allExtracted[allExtracted.length-1].type;
+  const t = DOC_TYPES[typeKey];
+  const header = t.csvCols.map(c=>`"${c}"`).join(',');
+  const rows = [];
   allExtracted.forEach(({type,data})=>{
-    const schema=DOC_TYPES[type];
-    const raw=schema.toCSVRow(data);
-    const arr=Array.isArray(raw[0])?raw:[raw];
-    arr.forEach(r=>rows.push(r.map(v=>`"${String(v==null?'':v).replace(/"/g,'""')}"`).join(',')));
+    const schema = DOC_TYPES[type];
+    const raw = schema.toCSVRow(data);
+    const arr = Array.isArray(raw[0]) ? raw : [raw];
+    arr.forEach(r => rows.push(r.map(v=>`"${String(v==null?'':v).replace(/"/g,'""')}"`).join(',')));
   });
-  const blob=new Blob([[header,...rows].join('\n')],{type:'text/csv;charset=utf-8;'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url; a.download=`${typeKey}_${new Date().toISOString().slice(0,10)}.csv`;
+  const blob = new Blob([[header,...rows].join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=`${typeKey}_${new Date().toISOString().slice(0,10)}.csv`;
   document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
 }
 
 async function pushCurrentToSheets() {
-  if(!sheetsConnected||!window._lastExtracted) return;
-  const btn=document.getElementById('pushBtn');
-  btn.disabled=true; btn.textContent='⏳ Pushing…';
+  if (!sheetsConnected || !window._lastExtracted) return;
+  const btn = document.getElementById('pushBtn');
+  btn.disabled = true; btn.textContent = '⏳ Pushing…';
   try {
-    const {type,data}=window._lastExtracted;
-    const schema=DOC_TYPES[type];
-    let rows=schema.toSheetRow(data);
-    rows=Array.isArray(rows[0])?rows:[rows];
-    // Prepend headers on first push
-    if(sheetsRowsPushed===0) rows=[schema.csvCols,...rows];
-    const url=`https://sheets.googleapis.com/v4/spreadsheets/${sheetsSpreadsheetId}/values/${encodeURIComponent(sheetsSheetName)}:append?valueInputOption=USER_ENTERED&key=${gApiKey}`;
-    const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({values:rows})});
-    if(!res.ok){const err=await res.json().catch(()=>({error:{message:'Unknown'}}));throw new Error(err.error?.message||'Sheets error '+res.status);}
-    const dataCount=Array.isArray(rows[0])?rows.length:1;
-    sheetsRowsPushed+=dataCount;
-    document.getElementById('connectedRowsSent').textContent=`${sheetsRowsPushed} row${sheetsRowsPushed>1?'s':''} pushed`;
-    btn.textContent='✅ Pushed!';
+    const {type, data} = window._lastExtracted;
+    const schema = DOC_TYPES[type];
+    let rows = schema.toSheetRow(data);
+    rows = Array.isArray(rows[0]) ? rows : [rows];
+    if (sheetsRowsPushed === 0) rows = [schema.csvCols, ...rows];
+
+    // Use Apps Script Web App (OAuth-authenticated)
+    const payload = { sheetId: sheetsSpreadsheetId, sheetName: sheetsSheetName, rows };
+    const res = await fetch(appsScriptUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' }, // Apps Script needs text/plain for CORS
+      body: JSON.stringify(payload)
+    });
+    const text = await res.text();
+    let ok = false;
+    try { ok = JSON.parse(text).ok; } catch(e) { ok = res.ok; }
+    if (!ok && !res.ok) throw new Error('Apps Script returned error: ' + text.slice(0,200));
+
+    const dataCount = rows.length - (sheetsRowsPushed===0 ? 1 : 0);
+    sheetsRowsPushed += dataCount;
+    document.getElementById('connectedRowsSent').textContent = `${sheetsRowsPushed} row${sheetsRowsPushed>1?'s':''} pushed`;
+    btn.textContent = '✅ Pushed!';
     showSuccess(`✅ ${dataCount} row${dataCount>1?'s':''} pushed to Google Sheets!`);
-    setTimeout(()=>{btn.disabled=false;btn.textContent='📤 Push to Sheets';},2500);
+    setTimeout(()=>{ btn.disabled=false; btn.textContent='📤 Push to Sheets'; }, 2500);
   } catch(e) {
-    btn.disabled=false; btn.textContent='📤 Push to Sheets';
-    showError('Push failed: '+e.message+'. Check your Google Sheets API key and that the sheet is public or API key has access.');
+    btn.disabled = false; btn.textContent = '📤 Push to Sheets';
+    showError('Push failed: ' + e.message + '. Make sure your Apps Script Web App is deployed as "Anyone can access".');
   }
 }
 
-/* ── Utilities ── */
-function setStep(n) { ['step1','step2','step3'].forEach((id,i)=>{const el=document.getElementById(id);el.className='step';if(i+1<n)el.classList.add('done');else if(i+1===n)el.classList.add('active');}); }
+/* ═══════════════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════════════ */
+function setStep(n) {
+  ['step1','step2','step3'].forEach((id,i) => {
+    const el = document.getElementById(id); el.className='step';
+    if (i+1 < n) el.classList.add('done');
+    else if (i+1 === n) el.classList.add('active');
+  });
+}
 function fmt(n) { if(n==null||n==='') return '—'; return '₹'+Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function esc(s) { return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function showError(msg) { const b=document.getElementById('errorBox');b.textContent=msg;b.classList.add('visible');document.getElementById('successBox').classList.remove('visible'); }
