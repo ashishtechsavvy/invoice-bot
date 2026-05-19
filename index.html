@@ -1,4 +1,29 @@
 <!DOCTYPE html>
+<!--
+  ══════════════════════════════════════════════════
+  SUPABASE SETUP — run this SQL once in your
+  Supabase dashboard → SQL Editor:
+  ══════════════════════════════════════════════════
+
+  create table if not exists invoice_bot_users (
+    user_id uuid primary key references auth.users(id) on delete cascade,
+    gemini_key text default '',
+    apps_script_url text default '',
+    sheet_id text default '',
+    sheet_name text default 'Sheet1',
+    updated_at timestamptz default now()
+  );
+
+  alter table invoice_bot_users enable row level security;
+
+  create policy "Users manage own settings"
+    on invoice_bot_users for all
+    using (auth.uid() = user_id)
+    with check (auth.uid() = user_id);
+
+  ══════════════════════════════════════════════════
+-->
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -186,9 +211,77 @@ tbody tr:last-child td{border-bottom:none;}
 .info-box.blue{background:var(--blue-light);border:1px solid #93c5fd;color:var(--blue);}
 .info-box.amber{background:var(--amber-light);border:1px solid #fcd34d;color:var(--amber);}
 .info-box.purple{background:var(--purple-light);border:1px solid #c4b4f0;color:var(--purple);}
+
+/* ── Auth overlay ── */
+#authOverlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:36px 32px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:18px;box-shadow:0 8px 40px rgba(0,0,0,.08);}
+.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+.auth-logo-box{width:42px;height:42px;background:var(--green-light);border:2px solid var(--green);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.auth-logo h2{font-size:17px;font-weight:700;letter-spacing:-.02em;}
+.auth-logo p{font-size:12px;color:var(--text2);}
+.auth-title{font-size:20px;font-weight:700;letter-spacing:-.02em;}
+.auth-sub{font-size:13px;color:var(--text2);margin-top:-10px;}
+.auth-field{display:flex;flex-direction:column;gap:5px;}
+.auth-field label{font-size:11px;font-family:var(--mono);color:var(--text3);letter-spacing:.06em;text-transform:uppercase;}
+.auth-input{padding:10px 12px;border:1px solid var(--border2);border-radius:9px;font-family:var(--sans);font-size:13px;color:var(--text);background:var(--bg);outline:none;transition:border-color .15s;}
+.auth-input:focus{border-color:var(--green);background:#fff;}
+.auth-btn{padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;}
+.auth-btn:hover{background:#236138;}
+.auth-btn:disabled{opacity:.5;cursor:not-allowed;}
+.auth-toggle{font-size:13px;color:var(--text2);text-align:center;}
+.auth-toggle a{color:var(--green);font-weight:600;cursor:pointer;text-decoration:none;}
+.auth-toggle a:hover{text-decoration:underline;}
+.auth-err{background:var(--red-light);border:1px solid #f5c6c0;border-radius:8px;padding:9px 12px;font-size:12px;color:var(--red);display:none;}
+.auth-err.visible{display:block;}
+.auth-ok{background:var(--green-light);border:1px solid var(--green-mid);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--green);display:none;}
+.auth-ok.visible{display:block;}
+.user-pill{display:flex;align-items:center;gap:8px;background:var(--green-light);border:1px solid var(--green-mid);border-radius:20px;padding:4px 12px 4px 6px;margin-left:16px;}
+.user-avatar{width:24px;height:24px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;}
+.user-email{font-size:12px;color:var(--green);font-weight:500;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.btn-signout{background:none;border:none;font-size:11px;color:var(--text3);cursor:pointer;padding:0;font-family:var(--sans);}
+.btn-signout:hover{color:var(--red);}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+
+<!-- ═══ AUTH OVERLAY ═══ -->
+<div id="authOverlay">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-box">📄</div>
+      <div>
+        <h2>Smart Doc Bot</h2>
+        <p>Powered by Gemini 3.1 Flash Lite</p>
+      </div>
+    </div>
+    <div>
+      <div class="auth-title" id="authTitle">Sign in</div>
+      <div class="auth-sub" id="authSub">Welcome back — sign in to your account</div>
+    </div>
+    <div class="auth-field" id="authNameField" style="display:none">
+      <label>Full name</label>
+      <input class="auth-input" type="text" id="authName" placeholder="Your name">
+    </div>
+    <div class="auth-field">
+      <label>Email</label>
+      <input class="auth-input" type="email" id="authEmail" placeholder="you@example.com">
+    </div>
+    <div class="auth-field">
+      <label>Password</label>
+      <input class="auth-input" type="password" id="authPassword" placeholder="••••••••">
+    </div>
+    <div class="auth-err" id="authErr"></div>
+    <div class="auth-ok" id="authOk"></div>
+    <button class="auth-btn" id="authBtn" onclick="handleAuth()">Sign in</button>
+    <div class="auth-toggle" id="authToggle">
+      Don't have an account? <a onclick="toggleAuthMode()">Sign up</a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MAIN APP (hidden until logged in) ═══ -->
+<div id="appShell" style="display:none">
 
 <div class="header">
   <div class="logo-box">📄</div>
@@ -203,6 +296,7 @@ tbody tr:last-child td{border-bottom:none;}
     <span>→</span>
     <span class="step" id="step3">3. To Sheets</span>
   </div>
+  <div class="user-pill" id="userPill" style="display:none"><div class="user-avatar" id="userAvatar">?</div><span class="user-email" id="userEmailLabel"></span><button class="btn-signout" onclick="signOut()">Sign out</button></div>
 </div>
 
 <div class="type-bar" id="typeBar"></div>
@@ -523,6 +617,7 @@ function saveGeminiKey() {
   document.getElementById('geminiStatus').textContent = 'Key saved ✓';
   updateExtractBtn();
   showSuccess('✅ Gemini API key saved! Using gemini-3.1-flash-lite.');
+  saveUserSettings();
 }
 
 function clearGeminiKey() {
@@ -553,6 +648,7 @@ function connectSheets() {
   document.getElementById('connectedSheetId').textContent = `📊 ${id.slice(0,24)}… / ${name}`;
   document.getElementById('connectedRowsSent').textContent = '0 rows pushed';
   showSuccess('✅ Google Sheets connected via Apps Script!');
+  saveUserSettings();
 }
 
 function disconnectSheets() {
@@ -1039,7 +1135,166 @@ function showError(msg) { const b=document.getElementById('errorBox');b.textCont
 function showSuccess(msg) { const b=document.getElementById('successBox');b.textContent=msg;b.classList.add('visible');document.getElementById('errorBox').classList.remove('visible'); }
 function hideMessages() { document.getElementById('errorBox').classList.remove('visible');document.getElementById('successBox').classList.remove('visible'); }
 
+
+/* ═══════════════════════════════════════════════════
+   SUPABASE AUTH + SETTINGS
+═══════════════════════════════════════════════════ */
+const SUPA_URL = 'https://bnsbfaswyxocgedpmjjd.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJuc2JmYXN3eXhvY2dlZHBtampkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNzU3ODUsImV4cCI6MjA5NDc1MTc4NX0.e51S8ltz0kBZDX0-uYkV6eU9mu5Jz78FBQE948dm7yo';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+let currentUser = null;
+let authMode = 'signin'; // 'signin' | 'signup'
+
+/* ── Boot: check session ── */
+async function bootAuth() {
+  const { data: { session } } = await supa.auth.getSession();
+  if (session?.user) {
+    onLoggedIn(session.user);
+  }
+  // Listen for auth changes
+  supa.auth.onAuthStateChange((_event, session) => {
+    if (session?.user) onLoggedIn(session.user);
+    else onLoggedOut();
+  });
+}
+
+function onLoggedIn(user) {
+  currentUser = user;
+  document.getElementById('authOverlay').style.display = 'none';
+  document.getElementById('appShell').style.display = 'block';
+  // Show user pill
+  const email = user.email || '';
+  document.getElementById('userPill').style.display = 'flex';
+  document.getElementById('userAvatar').textContent = email.charAt(0).toUpperCase();
+  document.getElementById('userEmailLabel').textContent = email;
+  // Load saved settings
+  loadUserSettings();
+}
+
+function onLoggedOut() {
+  currentUser = null;
+  document.getElementById('authOverlay').style.display = 'flex';
+  document.getElementById('appShell').style.display = 'none';
+  document.getElementById('userPill').style.display = 'none';
+}
+
+/* ── Sign in / Sign up ── */
+async function handleAuth() {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const btn = document.getElementById('authBtn');
+  const errEl = document.getElementById('authErr');
+  const okEl = document.getElementById('authOk');
+  errEl.classList.remove('visible'); okEl.classList.remove('visible');
+
+  if (!email || !password) { showAuthErr('Please enter email and password.'); return; }
+  btn.disabled = true;
+  btn.textContent = authMode === 'signin' ? 'Signing in…' : 'Creating account…';
+
+  try {
+    if (authMode === 'signin') {
+      const { error } = await supa.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+    } else {
+      const name = document.getElementById('authName').value.trim();
+      const { error } = await supa.auth.signUp({ email, password, options: { data: { full_name: name } } });
+      if (error) throw error;
+      okEl.textContent = '✅ Account created! Check your email to confirm, then sign in.';
+      okEl.classList.add('visible');
+      btn.disabled = false; btn.textContent = 'Sign up';
+      return;
+    }
+  } catch(e) {
+    showAuthErr(e.message || 'Authentication failed.');
+    btn.disabled = false;
+    btn.textContent = authMode === 'signin' ? 'Sign in' : 'Sign up';
+  }
+}
+
+function showAuthErr(msg) {
+  const el = document.getElementById('authErr');
+  el.textContent = msg; el.classList.add('visible');
+}
+
+function toggleAuthMode() {
+  authMode = authMode === 'signin' ? 'signup' : 'signin';
+  const isSignup = authMode === 'signup';
+  document.getElementById('authTitle').textContent = isSignup ? 'Create account' : 'Sign in';
+  document.getElementById('authSub').textContent = isSignup ? 'Sign up to save your settings across devices' : 'Welcome back — sign in to your account';
+  document.getElementById('authBtn').textContent = isSignup ? 'Sign up' : 'Sign in';
+  document.getElementById('authToggle').innerHTML = isSignup
+    ? 'Already have an account? <a onclick="toggleAuthMode()">Sign in</a>'
+    : 'Don\'t have an account? <a onclick="toggleAuthMode()">Sign up</a>';
+  document.getElementById('authNameField').style.display = isSignup ? 'flex' : 'none';
+  document.getElementById('authErr').classList.remove('visible');
+  document.getElementById('authOk').classList.remove('visible');
+}
+
+async function signOut() {
+  await supa.auth.signOut();
+  geminiKey = null; appsScriptUrl = null; sheetsSpreadsheetId = null; sheetsConnected = false;
+  clearQueue();
+}
+
+/* ── Save / Load user settings ── */
+async function saveUserSettings() {
+  if (!currentUser) return;
+  const settings = {
+    user_id: currentUser.id,
+    gemini_key: geminiKey || '',
+    apps_script_url: appsScriptUrl || '',
+    sheet_id: sheetsSpreadsheetId || '',
+    sheet_name: sheetsSheetName || 'Sheet1',
+    updated_at: new Date().toISOString()
+  };
+  await supa.from('invoice_bot_users').upsert(settings, { onConflict: 'user_id' });
+}
+
+async function loadUserSettings() {
+  if (!currentUser) return;
+  const { data, error } = await supa.from('invoice_bot_users').select('*').eq('user_id', currentUser.id).single();
+  if (error || !data) return;
+
+  // Restore Gemini key
+  if (data.gemini_key) {
+    geminiKey = data.gemini_key;
+    document.getElementById('geminiKeyInput').value = data.gemini_key;
+    document.getElementById('geminiForm').style.display = 'none';
+    document.getElementById('geminiConnectedInfo').style.display = 'flex';
+    document.getElementById('geminiStatus').className = 'connect-status connected';
+    document.getElementById('geminiStatus').textContent = 'Key saved ✓';
+    updateExtractBtn();
+  }
+
+  // Restore Sheets settings
+  if (data.apps_script_url && data.sheet_id) {
+    appsScriptUrl = data.apps_script_url;
+    sheetsSpreadsheetId = data.sheet_id;
+    sheetsSheetName = data.sheet_name || 'Sheet1';
+    sheetsConnected = true;
+    document.getElementById('appsScriptUrl').value = data.apps_script_url;
+    document.getElementById('sheetIdInput').value = data.sheet_id;
+    document.getElementById('sheetNameInput').value = sheetsSheetName;
+    document.getElementById('connectStatus').className = 'connect-status connected';
+    document.getElementById('connectStatus').textContent = 'Connected ✓';
+    document.getElementById('connectForm').style.display = 'none';
+    document.getElementById('connectedInfo').style.display = 'flex';
+    document.getElementById('connectedSheetId').textContent = `📊 ${data.sheet_id.slice(0,24)}… / ${sheetsSheetName}`;
+  }
+}
+
+/* Allow Enter key on auth inputs */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('authOverlay').style.display !== 'none') {
+    handleAuth();
+  }
+});
+
+
+bootAuth();
 init();
 </script>
+</div><!-- /appShell -->
 </body>
 </html>
