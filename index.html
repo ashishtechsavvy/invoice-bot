@@ -23,225 +23,648 @@
 
   ══════════════════════════════════════════════════
 -->
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Doc - AI</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>
-:root {
-  --bg:#f7f8f5;--surface:#ffffff;--surface2:#f0f2ee;
-  --border:#e2e6de;--border2:#d0d6ca;
-  --green:#2d7d46;--green-light:#e8f5ec;--green-mid:#4caf6e;
-  --blue:#1a56a0;--blue-light:#e8f0fb;
-  --purple:#5b3fa0;--purple-light:#f0ecfb;
-  --red:#c0392b;--red-light:#fdf0ee;
-  --amber:#b45309;--amber-light:#fef3e2;
-  --text:#1a1f18;--text2:#5a6357;--text3:#9aaa95;
-  --mono:'IBM Plex Mono',monospace;--sans:'Sora',sans-serif;--radius:12px;
-}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
-
-/* Header */
-.header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px;}
-.logo-box{width:36px;height:36px;background:var(--green-light);border:1.5px solid var(--green);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;}
-.header h1{font-size:15px;font-weight:600;letter-spacing:-0.02em;}
-.header p{font-size:12px;color:var(--text2);margin-top:1px;}
-.step-bar{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);font-family:var(--mono);}
-.step{padding:3px 10px;border-radius:20px;border:1px solid var(--border2);}
-.step.active{background:var(--green-light);border-color:var(--green);color:var(--green);font-weight:500;}
-.step.done{background:var(--green);color:#fff;border-color:var(--green);}
-
-/* Type bar */
-.type-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:4px;overflow-x:auto;}
-.type-btn{padding:10px 14px;border:none;background:none;cursor:pointer;font-family:var(--sans);font-size:13px;font-weight:500;color:var(--text2);border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.15s;display:flex;align-items:center;gap:6px;}
-.type-btn:hover{color:var(--text);}
-.type-btn.active{color:var(--green);border-bottom-color:var(--green);}
-.type-emoji{font-size:15px;}
-
-/* Layout */
-.layout{display:grid;grid-template-columns:400px 1fr;min-height:calc(100vh - 109px);}
-.left{padding:20px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:18px;background:var(--surface);overflow-y:auto;}
-.right{padding:20px;display:flex;flex-direction:column;gap:18px;overflow-y:auto;}
-.section-label{font-size:11px;font-family:var(--mono);color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;}
-
-/* Sheets connect */
-.sheets-connect{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
-.sheets-connect-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-.sheets-connect-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;}
-.connect-status{font-size:11px;font-family:var(--mono);padding:2px 8px;border-radius:20px;}
-.connect-status.disconnected{background:var(--amber-light);color:var(--amber);}
-.connect-status.connected{background:var(--green-light);color:var(--green);}
-.sheets-fields{display:flex;flex-direction:column;gap:8px;}
-.sheets-input-row{display:flex;flex-direction:column;gap:4px;}
-.sheets-input-label{font-size:11px;color:var(--text3);font-family:var(--mono);}
-.sheets-input{width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-family:var(--mono);font-size:12px;background:var(--surface);color:var(--text);outline:none;transition:border-color 0.15s;}
-.sheets-input:focus{border-color:var(--green);}
-.sheets-input::placeholder{color:var(--text3);}
-.btn-connect{width:100%;padding:9px;background:var(--green);color:#fff;border:none;border-radius:9px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;transition:background 0.15s;}
-.btn-connect:hover{background:#236138;}
-.btn-disconnect{font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;text-decoration:underline;}
-.connected-info{font-size:12px;color:var(--text2);font-family:var(--mono);word-break:break-all;}
-
-/* Upload */
-.upload-zone{border:2px dashed var(--border2);border-radius:var(--radius);padding:28px 16px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--bg);}
-.upload-zone:hover,.upload-zone.drag{border-color:var(--green);background:var(--green-light);}
-.upload-zone .icon{font-size:26px;margin-bottom:8px;}
-.upload-zone h3{font-size:13px;font-weight:600;margin-bottom:3px;}
-.upload-zone p{font-size:12px;color:var(--text2);}
-.upload-zone input{display:none;}
-
-/* File queue */
-.file-queue{display:flex;flex-direction:column;gap:6px;}
-.file-item{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;}
-.file-item-icon{width:32px;height:32px;background:var(--blue-light);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
-.file-item-info{flex:1;min-width:0;}
-.file-item-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.file-item-meta{font-size:11px;color:var(--text3);font-family:var(--mono);}
-.file-item-status{font-size:11px;font-family:var(--mono);padding:2px 7px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
-.file-item-status.pending{background:var(--amber-light);color:var(--amber);}
-.file-item-status.processing{background:var(--blue-light);color:var(--blue);}
-.file-item-status.done{background:var(--green-light);color:var(--green);}
-.file-item-status.error{background:var(--red-light);color:var(--red);}
-.btn-remove-file{background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:2px 4px;flex-shrink:0;}
-.btn-remove-file:hover{color:var(--red);}
-.btn-push-one{background:var(--blue-light);border:1px solid #93c5fd;color:var(--blue);cursor:pointer;font-size:13px;padding:3px 7px;border-radius:7px;flex-shrink:0;transition:background 0.15s;}
-.btn-push-one:hover{background:#d8e9ff;}
-.btn-push-one:disabled{opacity:.4;cursor:not-allowed;}
-.img-preview{display:none;width:100%;border-radius:10px;border:1px solid var(--border);max-height:160px;object-fit:contain;background:var(--bg);}
-.img-preview.visible{display:block;}
-
-/* Queue summary bar */
-.queue-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--green-light);border:1px solid var(--green-mid);border-radius:10px;font-size:12px;color:var(--green);font-family:var(--mono);}
-
-/* OR / sample */
-.or-row{display:flex;align-items:center;gap:10px;}
-.or-line{flex:1;height:1px;background:var(--border);}
-.or-text{font-size:11px;color:var(--text3);font-family:var(--mono);}
-.btn-sample{width:100%;padding:10px;background:var(--purple-light);border:1px solid #c4b4f0;border-radius:10px;color:var(--purple);font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s;}
-.btn-sample:hover{background:#e4dcf8;}
-
-/* Buttons */
-.btn-extract{width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:var(--radius);font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:8px;}
-.btn-extract:hover{background:#236138;}
-.btn-extract:disabled{opacity:.5;cursor:not-allowed;}
-.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg);}}
-.error-box{background:var(--red-light);border:1px solid #f5c6c0;border-radius:10px;padding:12px 14px;font-size:13px;color:var(--red);display:none;line-height:1.5;}
-.error-box.visible{display:block;}
-.success-box{background:var(--green-light);border:1px solid var(--green-mid);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--green);display:none;}
-.success-box.visible{display:block;}
-
-/* Right panel */
-.sheets-header{display:flex;align-items:center;gap:10px;padding-bottom:14px;border-bottom:1px solid var(--border);}
-.sheets-logo{width:26px;height:26px;}
-.sheets-title{font-size:14px;font-weight:600;}
-.sheets-sub{font-size:12px;color:var(--text2);}
-
-/* Fields */
-.fields-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.field-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;transition:all .2s;}
-.field-card.highlight{border-color:var(--green);background:var(--green-light);}
-.field-label{font-size:11px;font-family:var(--mono);color:var(--text3);letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px;}
-.field-value{font-size:14px;font-weight:500;color:var(--text);min-height:18px;}
-.field-value.amount{color:var(--green);font-family:var(--mono);font-size:15px;font-weight:600;}
-.field-value.status-paid{color:var(--green);}
-.field-value.status-pending{color:var(--amber);}
-.confidence{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-family:var(--mono);padding:2px 8px;border-radius:20px;margin-top:4px;}
-.confidence.high{background:var(--green-light);color:var(--green);}
-
-/* Table */
-.line-items-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
-.line-items-header{padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;}
-table{width:100%;border-collapse:collapse;font-size:13px;}
-thead th{padding:7px 14px;text-align:left;font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:.05em;text-transform:uppercase;background:var(--bg);border-bottom:1px solid var(--border);}
-tbody td{padding:9px 14px;border-bottom:1px solid var(--border);}
-tbody tr:last-child td{border-bottom:none;}
-.td-amount{font-family:var(--mono);text-align:right;}
-
-/* Sheet preview */
-.sheet-row-preview{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
-.sheet-row-label{padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;}
-.sheet-row-label .badge{font-family:var(--mono);font-size:11px;padding:2px 8px;background:var(--green-light);color:var(--green);border-radius:20px;}
-.sheet-cols{display:flex;overflow-x:auto;border-bottom:1px solid var(--border);}
-.sheet-col-header{padding:7px 10px;font-size:11px;font-family:var(--mono);color:var(--text3);background:var(--bg);border-right:1px solid var(--border);white-space:nowrap;min-width:90px;flex-shrink:0;}
-.sheet-col-header:first-child{background:var(--green-light);color:var(--green);font-weight:500;}
-.sheet-row-data{display:flex;overflow-x:auto;}
-.sheet-cell{padding:9px 10px;font-size:12px;border-right:1px solid var(--border);white-space:nowrap;min-width:90px;flex-shrink:0;font-family:var(--mono);color:var(--text2);}
-.sheet-cell.new{background:#f0fbf4;color:var(--green);font-weight:500;}
-.sheet-cell:last-child{border-right:none;}
-
-/* Actions */
-.action-row{display:flex;gap:8px;flex-wrap:wrap;}
-.action-btn{flex:1;min-width:120px;padding:10px 12px;border-radius:9px;font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;border:1px solid;transition:all .15s;text-align:center;}
-.action-btn.copy{background:var(--surface);border-color:var(--border2);color:var(--text2);}
-.action-btn.copy:hover{background:var(--bg);border-color:var(--green);color:var(--green);}
-.action-btn.download{background:var(--green);border-color:var(--green);color:#fff;font-weight:600;}
-.action-btn.download:hover{background:#236138;}
-.action-btn.push{background:var(--blue-light);border-color:#93c5fd;color:var(--blue);}
-.action-btn.push:hover:not(:disabled){background:#d8e9ff;}
-.action-btn.push-all{background:var(--green);border-color:var(--green);color:#fff;font-weight:600;}
-.action-btn.push-all:hover:not(:disabled){background:#236138;}
-.action-btn:disabled{opacity:.45;cursor:not-allowed;}
-
-/* Batch progress */
-.batch-progress{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
-.batch-header{padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;}
-.batch-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);}
-.batch-item:last-child{border-bottom:none;}
-.batch-item-name{flex:1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.batch-item-status{font-size:11px;font-family:var(--mono);padding:2px 8px;border-radius:20px;flex-shrink:0;}
-
-/* Result tabs (multi-file) */
-.result-tabs{display:flex;gap:4px;overflow-x:auto;padding-bottom:2px;}
-.result-tab{padding:6px 12px;border-radius:8px;border:1px solid var(--border2);font-size:12px;cursor:pointer;background:var(--surface);color:var(--text2);white-space:nowrap;transition:all .15s;}
-.result-tab.active{background:var(--green-light);border-color:var(--green);color:var(--green);font-weight:500;}
-
-/* Empty */
-.empty-state{text-align:center;padding:60px 20px;color:var(--text3);}
-.empty-icon{font-size:46px;margin-bottom:14px;opacity:.5;}
-.empty-state h3{font-size:15px;font-weight:600;color:var(--text2);margin-bottom:6px;}
-.empty-state p{font-size:13px;line-height:1.6;}
-
-/* Info boxes */
-.info-box{border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6;}
-.info-box.blue{background:var(--blue-light);border:1px solid #93c5fd;color:var(--blue);}
-.info-box.amber{background:var(--amber-light);border:1px solid #fcd34d;color:var(--amber);}
-.info-box.purple{background:var(--purple-light);border:1px solid #c4b4f0;color:var(--purple);}
-
-/* ── Auth overlay ── */
-#authOverlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;}
-.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:36px 32px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:18px;box-shadow:0 8px 40px rgba(0,0,0,.08);}
-.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
-.auth-logo-box{width:42px;height:42px;background:var(--green-light);border:2px solid var(--green);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;}
-.auth-logo h2{font-size:17px;font-weight:700;letter-spacing:-.02em;}
-.auth-logo p{font-size:12px;color:var(--text2);}
-.auth-title{font-size:20px;font-weight:700;letter-spacing:-.02em;}
-.auth-sub{font-size:13px;color:var(--text2);margin-top:-10px;}
-.auth-field{display:flex;flex-direction:column;gap:5px;}
-.auth-field label{font-size:11px;font-family:var(--mono);color:var(--text3);letter-spacing:.06em;text-transform:uppercase;}
-.auth-input{padding:10px 12px;border:1px solid var(--border2);border-radius:9px;font-family:var(--sans);font-size:13px;color:var(--text);background:var(--bg);outline:none;transition:border-color .15s;}
-.auth-input:focus{border-color:var(--green);background:#fff;}
-.auth-btn{padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;}
-.auth-btn:hover{background:#236138;}
-.auth-btn:disabled{opacity:.5;cursor:not-allowed;}
-.auth-toggle{font-size:13px;color:var(--text2);text-align:center;}
-.auth-toggle a{color:var(--green);font-weight:600;cursor:pointer;text-decoration:none;}
-.auth-toggle a:hover{text-decoration:underline;}
-.auth-err{background:var(--red-light);border:1px solid #f5c6c0;border-radius:8px;padding:9px 12px;font-size:12px;color:var(--red);display:none;}
-.auth-err.visible{display:block;}
-.auth-ok{background:var(--green-light);border:1px solid var(--green-mid);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--green);display:none;}
-.auth-ok.visible{display:block;}
-.user-pill{display:flex;align-items:center;gap:8px;background:var(--green-light);border:1px solid var(--green-mid);border-radius:20px;padding:4px 12px 4px 6px;margin-left:16px;}
-.user-avatar{width:24px;height:24px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;}
-.user-email{font-size:12px;color:var(--green);font-weight:500;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.btn-signout{background:none;border:none;font-size:11px;color:var(--text3);cursor:pointer;padding:0;font-family:var(--sans);}
-.btn-signout:hover{color:var(--red);}
-</style>
+<title>Smart Doc — AI Extractor</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* ══════ TOKENS ══════ */
+:root {
+  --bg: #f4f5f2;
+  --surface: #ffffff;
+  --surface2: #f9faf7;
+  --border: #e4e8df;
+  --border2: #d3d9cc;
+  --green: #2a7d46;
+  --green-dim: #3a9458;
+  --green-light: #eaf5ee;
+  --green-mid: #5ab87a;
+  --blue: #1a56a0;
+  --blue-light: #e8f0fb;
+  --purple: #5b3fa0;
+  --purple-light: #f0ecfb;
+  --red: #c0392b;
+  --red-light: #fdf0ee;
+  --amber: #b45309;
+  --amber-light: #fef3e2;
+  --cyan: #0e7490;
+  --cyan-light: #e0f7fa;
+  --text: #1a1f18;
+  --text2: #586054;
+  --text3: #96a691;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Plus Jakarta Sans', sans-serif;
+  --radius: 14px;
+  --shadow: 0 2px 12px rgba(0,0,0,.06);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.1);
+}
+
+/* ══════ RESET ══════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+button { font-family: inherit; cursor: pointer; }
+input { font-family: inherit; }
+a { color: inherit; }
+
+/* ══════ SCROLLBAR ══════ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+
+/* ══════ HEADER ══════ */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo-wrap { display: flex; align-items: center; gap: 10px; }
+.logo-box {
+  width: 34px; height: 34px;
+  background: var(--green);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  box-shadow: 0 2px 8px rgba(42,125,70,.3);
+}
+.header-title { font-size: 14px; font-weight: 700; letter-spacing: -.02em; }
+.header-sub { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 1px; }
+
+.step-bar {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 5px;
+  font-family: var(--mono); font-size: 11px; color: var(--text3);
+}
+.step {
+  padding: 4px 12px;
+  border-radius: 99px;
+  border: 1px solid var(--border2);
+  transition: all .2s;
+}
+.step.active { background: var(--green-light); border-color: var(--green); color: var(--green); font-weight: 600; }
+.step.done { background: var(--green); color: #fff; border-color: var(--green); }
+.step-divider { font-size: 10px; opacity: .4; }
+
+.user-pill {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--green-light);
+  border: 1px solid var(--green-mid);
+  border-radius: 99px;
+  padding: 4px 12px 4px 5px;
+  margin-left: 12px;
+}
+.user-avatar {
+  width: 26px; height: 26px;
+  background: var(--green);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 11px; font-weight: 700;
+}
+.user-email { font-size: 12px; color: var(--green); font-weight: 600; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.btn-signout { background: none; border: none; font-size: 11px; color: var(--text3); padding: 0; transition: color .15s; }
+.btn-signout:hover { color: var(--red); }
+
+/* ══════ LAYOUT ══════ */
+.layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  min-height: calc(100vh - 56px);
+}
+
+/* ══════ LEFT PANEL ══════ */
+.left {
+  padding: 20px;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 16px;
+  background: var(--surface);
+  overflow-y: auto;
+  max-height: calc(100vh - 56px);
+}
+
+/* ══════ RIGHT PANEL ══════ */
+.right {
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 16px;
+  overflow-y: auto;
+  max-height: calc(100vh - 56px);
+}
+
+/* ══════ SECTION LABEL ══════ */
+.section-label {
+  font-size: 10px;
+  font-family: var(--mono);
+  color: var(--text3);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+/* ══════ CARDS ══════ */
+.card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+/* ══════ STATUS BADGES ══════ */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-family: var(--mono);
+  padding: 3px 9px; border-radius: 99px;
+  font-weight: 500;
+}
+.badge-disconnected { background: var(--amber-light); color: var(--amber); }
+.badge-connected { background: var(--green-light); color: var(--green); }
+.badge-pending { background: var(--amber-light); color: var(--amber); }
+.badge-processing { background: var(--blue-light); color: var(--blue); }
+.badge-done { background: var(--green-light); color: var(--green); }
+.badge-error { background: var(--red-light); color: var(--red); }
+.badge-detecting { background: var(--purple-light); color: var(--purple); }
+
+/* ══════ FORM ELEMENTS ══════ */
+.field-group { display: flex; flex-direction: column; gap: 4px; }
+.field-label { font-size: 10px; font-family: var(--mono); color: var(--text3); letter-spacing: .08em; text-transform: uppercase; }
+.field-input {
+  width: 100%; padding: 9px 11px;
+  border: 1px solid var(--border2);
+  border-radius: 9px;
+  font-family: var(--mono); font-size: 12px;
+  background: var(--surface); color: var(--text);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.field-input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(42,125,70,.1); }
+.field-input::placeholder { color: var(--text3); }
+
+/* ══════ BUTTONS ══════ */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-size: 13px; font-weight: 600;
+  border: none;
+  transition: all .15s;
+}
+.btn-primary { background: var(--green); color: #fff; box-shadow: 0 2px 8px rgba(42,125,70,.25); }
+.btn-primary:hover { background: var(--green-dim); box-shadow: 0 4px 14px rgba(42,125,70,.3); transform: translateY(-1px); }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-secondary { background: var(--surface); border: 1px solid var(--border2); color: var(--text2); }
+.btn-secondary:hover { border-color: var(--green); color: var(--green); background: var(--green-light); }
+.btn-ghost { background: none; border: none; color: var(--text3); font-size: 11px; }
+.btn-ghost:hover { color: var(--red); }
+.btn-blue { background: var(--blue-light); border: 1px solid #93c5fd; color: var(--blue); }
+.btn-blue:hover { background: #d8e9ff; }
+.btn-full { width: 100%; }
+
+/* ══════ INFO BOXES ══════ */
+.info-box {
+  border-radius: 9px; padding: 10px 12px;
+  font-size: 12px; line-height: 1.6;
+}
+.info-blue { background: var(--blue-light); border: 1px solid #93c5fd; color: var(--blue); }
+.info-amber { background: var(--amber-light); border: 1px solid #fcd34d; color: var(--amber); }
+.info-green { background: var(--green-light); border: 1px solid var(--green-mid); color: var(--green); }
+.info-red { background: var(--red-light); border: 1px solid #f5c6c0; color: var(--red); }
+.msg-box { border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.5; display: none; }
+.msg-box.visible { display: block; }
+
+/* ══════ GEMINI CARD ══════ */
+.gemini-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.gemini-title { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 7px; }
+.gemini-form { display: flex; flex-direction: column; gap: 8px; }
+.gemini-connected { display: none; flex-direction: column; gap: 6px; }
+
+/* ══════ UPLOAD ZONE ══════ */
+.upload-zone {
+  border: 2px dashed var(--border2);
+  border-radius: var(--radius);
+  padding: 28px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--bg);
+  position: relative;
+  overflow: hidden;
+}
+.upload-zone::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(42,125,70,.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+.upload-zone:hover, .upload-zone.drag {
+  border-color: var(--green);
+  background: var(--green-light);
+}
+.upload-zone input { display: none; }
+.upload-icon { font-size: 28px; margin-bottom: 8px; }
+.upload-zone h3 { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+.upload-zone p { font-size: 12px; color: var(--text2); }
+.upload-zone .detect-hint {
+  margin-top: 8px;
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-family: var(--mono); color: var(--purple);
+  background: var(--purple-light); border-radius: 99px; padding: 3px 10px;
+}
+
+/* ══════ FILE QUEUE ══════ */
+.file-queue { display: flex; flex-direction: column; gap: 6px; }
+.file-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 10px 12px;
+  display: flex; align-items: center; gap: 10px;
+  transition: border-color .15s;
+}
+.file-item:hover { border-color: var(--border2); }
+.file-item-icon {
+  width: 34px; height: 34px;
+  background: var(--blue-light);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+}
+.file-item-info { flex: 1; min-width: 0; }
+.file-item-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.file-item-meta { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 1px; }
+.file-item-type-badge {
+  font-size: 10px; font-family: var(--mono);
+  padding: 2px 8px; border-radius: 99px;
+  white-space: nowrap; flex-shrink: 0;
+  font-weight: 600;
+}
+.file-type-invoice { background: #fff3e0; color: #e65100; }
+.file-type-bank { background: #e3f2fd; color: #1565c0; }
+.file-type-flight { background: #e8f5e9; color: #2e7d32; }
+.file-type-receipt { background: #fce4ec; color: #c62828; }
+.file-type-expense { background: #f3e5f5; color: #6a1b9a; }
+.file-type-unknown { background: var(--bg); color: var(--text3); }
+
+.btn-push-one {
+  background: var(--blue-light); border: 1px solid #93c5fd;
+  color: var(--blue); border-radius: 7px;
+  font-size: 12px; padding: 4px 8px; flex-shrink: 0;
+  transition: all .15s;
+}
+.btn-push-one:hover:not(:disabled) { background: #d8e9ff; }
+.btn-push-one:disabled { opacity: .4; cursor: not-allowed; }
+.btn-remove { background: none; border: none; color: var(--text3); font-size: 16px; padding: 2px; flex-shrink: 0; transition: color .15s; }
+.btn-remove:hover { color: var(--red); }
+
+.img-preview {
+  display: none; width: 100%; border-radius: 10px;
+  border: 1px solid var(--border); max-height: 160px;
+  object-fit: contain; background: var(--bg);
+  margin-top: 8px;
+}
+.img-preview.visible { display: block; }
+
+/* ══════ EXTRACT BUTTON ══════ */
+.extract-btn {
+  width: 100%; padding: 13px;
+  background: var(--green); color: #fff;
+  border: none; border-radius: var(--radius);
+  font-size: 14px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  transition: all .2s;
+  box-shadow: 0 4px 16px rgba(42,125,70,.25);
+  letter-spacing: -.01em;
+}
+.extract-btn:hover:not(:disabled) {
+  background: var(--green-dim);
+  box-shadow: 0 6px 24px rgba(42,125,70,.35);
+  transform: translateY(-1px);
+}
+.extract-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* ══════ SPINNER ══════ */
+.spinner {
+  width: 16px; height: 16px;
+  border: 2.5px solid rgba(255,255,255,.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .65s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ══════ RIGHT PANEL COMPONENTS ══════ */
+.panel-header {
+  display: flex; align-items: center; gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.panel-title { font-size: 15px; font-weight: 700; letter-spacing: -.02em; }
+.panel-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+/* ══════ RESULT TABS ══════ */
+.result-tabs { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 2px; flex-wrap: nowrap; }
+.result-tab {
+  padding: 6px 13px;
+  border-radius: 8px;
+  border: 1px solid var(--border2);
+  font-size: 12px; font-weight: 500;
+  background: var(--surface);
+  color: var(--text2);
+  white-space: nowrap;
+  transition: all .15s;
+  display: flex; align-items: center; gap: 5px;
+}
+.result-tab.active { background: var(--green-light); border-color: var(--green); color: var(--green); }
+.result-tab:hover:not(.active) { border-color: var(--border2); background: var(--surface2); }
+
+/* ══════ RESULT CONTENT ══════ */
+.result-wrap { display: flex; flex-direction: column; gap: 14px; animation: fadeUp .25s ease; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ══════ DOC TYPE BANNER ══════ */
+.doc-type-banner {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  border: 1.5px solid;
+}
+.doc-type-icon { font-size: 22px; }
+.doc-type-label { font-size: 13px; font-weight: 700; }
+.doc-type-sub { font-size: 11px; font-family: var(--mono); margin-top: 1px; opacity: .75; }
+
+/* ══════ FIELDS GRID ══════ */
+.fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+}
+.field-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 12px 13px;
+  transition: all .2s;
+}
+.field-card:hover { border-color: var(--border2); box-shadow: var(--shadow); }
+.field-card.highlight {
+  border-color: var(--green);
+  background: var(--green-light);
+}
+.field-card.highlight .fc-label { color: var(--green-dim); }
+.fc-label {
+  font-size: 10px; font-family: var(--mono);
+  color: var(--text3); letter-spacing: .07em;
+  text-transform: uppercase; margin-bottom: 5px;
+}
+.fc-value { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.3; }
+.fc-value.amount { color: var(--green); font-family: var(--mono); font-size: 15px; }
+.fc-value.status-ok { color: var(--green); }
+.fc-value.status-warn { color: var(--amber); }
+.fc-sub { font-size: 11px; font-family: var(--mono); color: var(--text3); margin-top: 3px; }
+
+/* ══════ LINE ITEMS TABLE ══════ */
+.table-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.table-card-header {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+.table-card-header .count-badge {
+  font-size: 11px; font-family: var(--mono);
+  padding: 2px 8px; border-radius: 99px;
+  background: var(--bg);
+  color: var(--text3);
+}
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.data-table thead th {
+  padding: 8px 14px;
+  text-align: left;
+  font-family: var(--mono); font-size: 10px; color: var(--text3);
+  letter-spacing: .08em; text-transform: uppercase;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.data-table tbody td {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover td { background: var(--surface2); }
+.td-right { text-align: right; font-family: var(--mono); }
+.td-num { color: var(--text2); font-family: var(--mono); }
+.td-debit { color: var(--red); font-family: var(--mono); text-align: right; }
+.td-credit { color: var(--green); font-family: var(--mono); text-align: right; }
+.type-chip {
+  display: inline-block;
+  font-size: 10px; font-family: var(--mono);
+  padding: 2px 7px; border-radius: 5px;
+  background: var(--bg); color: var(--text3);
+}
+
+/* ══════ SHEET PREVIEW ══════ */
+.sheet-preview {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.sheet-preview-header {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+.sheet-preview-header .row-badge {
+  margin-left: auto;
+  font-size: 11px; font-family: var(--mono);
+  padding: 2px 9px; border-radius: 99px;
+  background: var(--green-light); color: var(--green);
+  font-weight: 700;
+}
+.sheet-scroll { overflow-x: auto; }
+.sheet-header-row, .sheet-data-row { display: flex; }
+.sheet-th, .sheet-td {
+  padding: 8px 11px;
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+  min-width: 100px;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.sheet-th:last-child, .sheet-td:last-child { border-right: none; }
+.sheet-th {
+  font-family: var(--mono); color: var(--text3);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  letter-spacing: .05em;
+  font-size: 10px; text-transform: uppercase;
+}
+.sheet-td {
+  font-family: var(--mono); color: var(--green);
+  font-weight: 600; background: #f0fbf4;
+}
+.multi-rows-note {
+  padding: 7px 14px;
+  font-size: 11px; font-family: var(--mono);
+  color: var(--text3);
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+
+/* ══════ ACTION ROW ══════ */
+.action-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.action-btn {
+  flex: 1; min-width: 110px;
+  padding: 10px 12px;
+  border-radius: 10px; font-size: 13px; font-weight: 600;
+  border: 1px solid;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: all .15s;
+}
+.action-btn:disabled { opacity: .45; cursor: not-allowed; }
+.action-copy { background: var(--surface); border-color: var(--border2); color: var(--text2); }
+.action-copy:hover:not(:disabled) { border-color: var(--green); color: var(--green); background: var(--green-light); }
+.action-download { background: var(--green); border-color: var(--green); color: #fff; box-shadow: 0 2px 8px rgba(42,125,70,.2); }
+.action-download:hover:not(:disabled) { background: var(--green-dim); }
+.action-push { background: var(--blue-light); border-color: #93c5fd; color: var(--blue); }
+.action-push:hover:not(:disabled) { background: #d8e9ff; }
+.action-push-all { background: var(--green); border-color: var(--green); color: #fff; }
+.action-push-all:hover:not(:disabled) { background: var(--green-dim); }
+
+/* ══════ BATCH PROGRESS ══════ */
+.batch-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.batch-card-header {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+.batch-file-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  transition: background .15s;
+}
+.batch-file-row:last-child { border-bottom: none; }
+.batch-file-name { flex: 1; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ══════ EMPTY STATE ══════ */
+.empty-state {
+  text-align: center; padding: 64px 24px;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.empty-icon {
+  width: 64px; height: 64px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; margin-bottom: 4px;
+}
+.empty-state h3 { font-size: 16px; font-weight: 700; color: var(--text2); }
+.empty-state p { font-size: 13px; color: var(--text3); line-height: 1.7; max-width: 340px; }
+.detect-tags {
+  display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 4px;
+}
+.detect-tag {
+  font-size: 11px; font-family: var(--mono);
+  padding: 3px 10px; border-radius: 99px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text3);
+}
+
+/* ══════ OR DIVIDER ══════ */
+.or-row { display: flex; align-items: center; gap: 10px; }
+.or-line { flex: 1; height: 1px; background: var(--border); }
+.or-text { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+
+/* ══════ SAMPLE BUTTON ══════ */
+.btn-sample {
+  width: 100%; padding: 11px;
+  background: var(--purple-light);
+  border: 1px solid #c4b4f0;
+  border-radius: 10px;
+  color: var(--purple);
+  font-size: 13px; font-weight: 600;
+  transition: all .15s;
+}
+.btn-sample:hover { background: #e4dcf8; }
+
+/* ══════ DETAILS / ACCORDION ══════ */
+details summary { cursor: pointer; user-select: none; font-size: 12px; font-weight: 600; padding: 6px 0; color: var(--blue); list-style: none; }
+details summary::-webkit-details-marker { display: none; }
+details summary::before { content: '▶ '; font-size: 9px; }
+details[open] summary::before { content: '▼ '; }
+.script-code {
+  display: block; background: #1a1f18; color: #a8d5b5;
+  border-radius: 8px; padding: 10px 12px;
+  font-family: var(--mono); font-size: 11px;
+  white-space: pre-wrap; line-height: 1.7;
+  margin: 6px 0;
+}
+
+/* ══════ AUTH OVERLAY ══════ */
+#authOverlay {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+}
+.auth-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 36px 32px;
+  width: 100%; max-width: 400px;
+  display: flex; flex-direction: column; gap: 18px;
+  box-shadow: var(--shadow-lg);
+}
+.auth-logo { display: flex; align-items: center; gap: 11px; }
+.auth-logo-box {
+  width: 44px; height: 44px;
+  background: var(--green);
+  border-radius: 13px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 21px;
+  box-shadow: 0 4px 14px rgba(42,125,70,.3);
+}
+.auth-logo h2 { font-size: 17px; font-weight: 800; letter-spacing: -.03em; }
+.auth-logo p { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
+.auth-heading { font-size: 22px; font-weight: 800; letter-spacing: -.03em; }
+.auth-sub { font-size: 13px; color: var(--text2); margin-top: -12px; }
+.auth-btn-main {
+  padding: 13px;
+  background: var(--green); color: #fff;
+  border: none; border-radius: 11px;
+  font-size: 14px; font-weight: 700;
+  transition: all .15s;
+  box-shadow: 0 4px 14px rgba(42,125,70,.25);
+}
+.auth-btn-main:hover { background: var(--green-dim); }
+.auth-btn-main:disabled { opacity: .5; cursor: not-allowed; }
+.auth-toggle { font-size: 13px; color: var(--text2); text-align: center; }
+.auth-toggle a { color: var(--green); font-weight: 700; cursor: pointer; }
+.auth-toggle a:hover { text-decoration: underline; }
+</style>
 </head>
 <body>
 
@@ -252,371 +675,450 @@ tbody tr:last-child td{border-bottom:none;}
       <div class="auth-logo-box">📄</div>
       <div>
         <h2>Smart Doc Bot</h2>
-        <p>Powered by Gemini 3.1 Flash Lite</p>
+        <p>AUTO-DETECT · EXTRACT · SYNC</p>
       </div>
     </div>
     <div>
-      <div class="auth-title" id="authTitle">Sign in</div>
-      <div class="auth-sub" id="authSub">Welcome back — sign in to your account</div>
+      <div class="auth-heading" id="authTitle">Sign in</div>
+      <div class="auth-sub" id="authSub">Welcome back — continue to your workspace</div>
     </div>
-    <div class="auth-field" id="authNameField" style="display:none">
-      <label>Full name</label>
-      <input class="auth-input" type="text" id="authName" placeholder="Your name">
+    <div class="field-group" id="authNameField" style="display:none">
+      <div class="field-label">Full name</div>
+      <input class="field-input" type="text" id="authName" placeholder="Your name">
     </div>
-    <div class="auth-field">
-      <label>Email</label>
-      <input class="auth-input" type="email" id="authEmail" placeholder="you@example.com">
+    <div class="field-group">
+      <div class="field-label">Email</div>
+      <input class="field-input" type="email" id="authEmail" placeholder="you@example.com">
     </div>
-    <div class="auth-field">
-      <label>Password</label>
-      <input class="auth-input" type="password" id="authPassword" placeholder="••••••••">
+    <div class="field-group">
+      <div class="field-label">Password</div>
+      <input class="field-input" type="password" id="authPassword" placeholder="••••••••">
     </div>
-    <div class="auth-err" id="authErr"></div>
-    <div class="auth-ok" id="authOk"></div>
-    <button class="auth-btn" id="authBtn" onclick="handleAuth()">Sign in</button>
+    <div class="info-box info-red msg-box" id="authErr"></div>
+    <div class="info-box info-green msg-box" id="authOk"></div>
+    <button class="auth-btn-main" id="authBtn" onclick="handleAuth()">Sign in</button>
     <div class="auth-toggle" id="authToggle">
       Don't have an account? <a onclick="toggleAuthMode()">Sign up</a>
     </div>
   </div>
 </div>
 
-<!-- ═══ MAIN APP (hidden until logged in) ═══ -->
+<!-- ═══ MAIN APP ═══ -->
 <div id="appShell" style="display:none">
 
 <div class="header">
-  <div class="logo-box">📄</div>
-  <div>
-    <h1>Smart Doc → Google Sheets Bot</h1>
-    <p>Gemini 3.1 Flash Lite · Extract any document into your spreadsheet</p>
+  <div class="logo-wrap">
+    <div class="logo-box">📄</div>
+    <div>
+      <div class="header-title">Smart Doc → Sheets</div>
+      <div class="header-sub">Auto-detect · Gemini Flash</div>
+    </div>
   </div>
   <div class="step-bar">
-    <span class="step active" id="step1">1. Upload</span>
-    <span>→</span>
-    <span class="step" id="step2">2. Extract</span>
-    <span>→</span>
-    <span class="step" id="step3">3. To Sheets</span>
+    <span class="step active" id="step1">1 Upload</span>
+    <span class="step-divider">›</span>
+    <span class="step" id="step2">2 Extract</span>
+    <span class="step-divider">›</span>
+    <span class="step" id="step3">3 Sync</span>
   </div>
-  <div class="user-pill" id="userPill" style="display:none"><div class="user-avatar" id="userAvatar">?</div><span class="user-email" id="userEmailLabel"></span><button class="btn-signout" onclick="signOut()">Sign out</button></div>
+  <div class="user-pill" id="userPill" style="display:none">
+    <div class="user-avatar" id="userAvatar">?</div>
+    <span class="user-email" id="userEmailLabel"></span>
+    <button class="btn-signout" onclick="signOut()">Sign out</button>
+  </div>
 </div>
 
-<div class="type-bar" id="typeBar"></div>
-
 <div class="layout">
+
+  <!-- ══ LEFT PANEL ══ -->
   <div class="left">
 
-    <!-- ── Gemini API Key ── -->
+    <!-- Gemini Key -->
     <div>
       <div class="section-label">Gemini AI key</div>
-      <div class="sheets-connect">
-        <div class="sheets-connect-header">
-          <div class="sheets-connect-title">🤖 Gemini 3.1 Flash Lite</div>
-          <span class="connect-status disconnected" id="geminiStatus">Not set</span>
+      <div class="card">
+        <div class="gemini-header">
+          <div class="gemini-title">🤖 Gemini Flash Lite</div>
+          <span class="badge badge-disconnected" id="geminiStatus">Not set</span>
         </div>
-        <div id="geminiForm" class="sheets-fields">
-          <div class="info-box blue">✨ Free API key at <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--blue);font-weight:600">aistudio.google.com</a></div>
-          <div class="sheets-input-row">
-            <div class="sheets-input-label">GEMINI API KEY <span style="color:var(--red)">*required</span></div>
-            <input class="sheets-input" type="password" id="geminiKeyInput" placeholder="AIzaSy...">
+        <div class="gemini-form" id="geminiForm">
+          <div class="info-box info-blue">✨ Free key at <a href="https://aistudio.google.com/app/apikey" target="_blank" style="font-weight:700">aistudio.google.com</a></div>
+          <div class="field-group">
+            <div class="field-label">API key <span style="color:var(--red)">*required</span></div>
+            <input class="field-input" type="password" id="geminiKeyInput" placeholder="AIzaSy…">
           </div>
-          <button class="btn-connect" onclick="saveGeminiKey()">Save API Key</button>
-          <div style="font-size:11px;color:var(--text3);line-height:1.6">🔒 Stays in your browser only — never sent anywhere except Google AI APIs.</div>
+          <button class="btn btn-primary btn-full" onclick="saveGeminiKey()">Save API Key</button>
+          <div style="font-size:11px;color:var(--text3);line-height:1.6">🔒 Stored in your account only — never shared externally.</div>
         </div>
-        <div id="geminiConnectedInfo" style="display:none;flex-direction:column;gap:6px">
-          <div style="font-size:12px;color:var(--text2)">Using <b>gemini-3.1-flash-lite</b></div>
-          <button class="btn-disconnect" onclick="clearGeminiKey()">Change key</button>
+        <div class="gemini-connected" id="geminiConnectedInfo">
+          <div style="font-size:12px;color:var(--text2)">Using <strong>gemini-2.0-flash-lite</strong></div>
+          <button class="btn-ghost" onclick="clearGeminiKey()">Change key</button>
         </div>
       </div>
     </div>
 
-    <!-- ── Google Sheets connect ── -->
+    <!-- Google Sheets -->
     <div>
       <div class="section-label">Google Sheets (optional)</div>
-      <div class="sheets-connect">
-        <div class="sheets-connect-header">
-          <div class="sheets-connect-title">
+      <div class="card">
+        <div class="gemini-header">
+          <div class="gemini-title">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#43A047" d="M37,45H11c-1.657,0-3-1.343-3-3V6c0-1.657,1.343-3,3-3h19l10,10v29C40,43.657,38.657,45,37,45z"/><path fill="#C8E6C9" d="M40,13H30V3L40,13z"/><path fill="#2E7D32" d="M30,3l10,10h-10V3z"/><path fill="#fff" d="M15,24h18v2H15V24z M15,28h18v2H15V28z M15,32h11v2H15V32z M15,20h18v2H15V20z"/></svg>
             Google Sheets
           </div>
-          <span class="connect-status disconnected" id="connectStatus">Not connected</span>
+          <span class="badge badge-disconnected" id="connectStatus">Disconnected</span>
         </div>
-        <div id="connectForm" class="sheets-fields">
-
-          <!-- OAuth notice -->
-          <div class="info-box amber">
-            ⚠️ <b>Google Sheets requires OAuth</b> — API keys alone won't work (Google disabled them for Sheets). Use the free <b>Apps Script Web App</b> method below:
-          </div>
-          <details style="cursor:pointer">
-            <summary style="font-size:12px;color:var(--blue);font-weight:600;padding:6px 0;user-select:none">📋 How to set up Apps Script (1 min)</summary>
+        <div id="connectForm" style="display:flex;flex-direction:column;gap:9px">
+          <div class="info-box info-amber">⚠️ Sheets requires OAuth — use the free <strong>Apps Script</strong> method below.</div>
+          <details>
+            <summary>📋 Set up Apps Script (1 min)</summary>
             <div style="font-size:12px;color:var(--text2);line-height:1.7;padding:8px 0;border-top:1px solid var(--border);margin-top:6px">
-              1. Open your Google Sheet → <b>Extensions → Apps Script</b><br>
-              2. Paste this code and save:<br>
-              <code style="display:block;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;margin:6px 0;font-size:11px;white-space:pre-wrap">function doPost(e){
-  var data=JSON.parse(e.postData.contents);
-  var ss=SpreadsheetApp.openById(data.sheetId);
-  var sh=ss.getSheetByName(data.sheetName)||ss.getSheets()[0];
-  sh.getRange(sh.getLastRow()+1,1,data.rows.length,data.rows[0].length).setValues(data.rows);
-  return ContentService.createTextOutput(JSON.stringify({ok:true})).setMimeType(ContentService.MimeType.JSON);
+              1. Open your Sheet → <b>Extensions → Apps Script</b><br>
+              2. Paste this code and save:
+              <code class="script-code">function doPost(e){
+  var d=JSON.parse(e.postData.contents);
+  var ss=SpreadsheetApp.openById(d.sheetId);
+  var sh=ss.getSheetByName(d.sheetName)||ss.getSheets()[0];
+  sh.getRange(sh.getLastRow()+1,1,d.rows.length,d.rows[0].length)
+    .setValues(d.rows);
+  return ContentService
+    .createTextOutput(JSON.stringify({ok:true}))
+    .setMimeType(ContentService.MimeType.JSON);
 }</code>
-              3. Click <b>Deploy → New deployment → Web app</b><br>
-              4. Set "Who has access" → <b>Anyone</b> → Deploy<br>
-              5. Copy the <b>Web app URL</b> and paste below
+              3. <b>Deploy → New deployment → Web app</b><br>
+              4. "Who has access" → <b>Anyone</b> → Deploy<br>
+              5. Copy the Web app URL below
             </div>
           </details>
-
-          <div class="sheets-input-row">
-            <div class="sheets-input-label">APPS SCRIPT WEB APP URL</div>
-            <input class="sheets-input" type="text" id="appsScriptUrl" placeholder="https://script.google.com/macros/s/.../exec">
+          <div class="field-group">
+            <div class="field-label">Apps Script URL</div>
+            <input class="field-input" type="text" id="appsScriptUrl" placeholder="https://script.google.com/macros/s/.../exec">
           </div>
-          <div class="sheets-input-row">
-            <div class="sheets-input-label">SPREADSHEET ID</div>
-            <input class="sheets-input" type="text" id="sheetIdInput" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms">
-            <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">From URL: /spreadsheets/d/<b>ID</b>/edit</div>
+          <div class="field-group">
+            <div class="field-label">Spreadsheet ID</div>
+            <input class="field-input" type="text" id="sheetIdInput" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgm…">
+            <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">/spreadsheets/d/<strong>ID</strong>/edit</div>
           </div>
-          <div class="sheets-input-row">
-            <div class="sheets-input-label">SHEET TAB NAME</div>
-            <input class="sheets-input" type="text" id="sheetNameInput" placeholder="Sheet1" value="Sheet1">
+          <div class="field-group">
+            <div class="field-label">Sheet tab name</div>
+            <input class="field-input" type="text" id="sheetNameInput" placeholder="Sheet1" value="Sheet1">
           </div>
-          <button class="btn-connect" onclick="connectSheets()">Connect Sheets</button>
+          <button class="btn btn-primary btn-full" onclick="connectSheets()">Connect Sheets</button>
         </div>
         <div id="connectedInfo" style="display:none;flex-direction:column;gap:8px">
-          <div class="connected-info" id="connectedSheetId"></div>
+          <div style="font-size:12px;color:var(--text2);font-family:var(--mono);word-break:break-all" id="connectedSheetId"></div>
           <div style="display:flex;align-items:center;justify-content:space-between">
-            <div style="font-size:12px;color:var(--text2)" id="connectedRowsSent">0 rows pushed</div>
-            <button class="btn-disconnect" onclick="disconnectSheets()">Disconnect</button>
+            <div style="font-size:12px;color:var(--green);font-weight:600" id="connectedRowsSent">0 rows pushed</div>
+            <button class="btn-ghost" onclick="disconnectSheets()">Disconnect</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ── Upload zone ── -->
+    <!-- Upload -->
     <div>
       <div class="section-label">Upload documents</div>
-      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFiles(event)">
+      <div class="upload-zone" id="uploadZone"
+        onclick="document.getElementById('fileInput').click()"
+        ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFiles(event)">
         <input type="file" id="fileInput" accept="image/*,.pdf" multiple onchange="handleFiles(this.files)">
-        <div class="icon">📋</div>
-        <h3 id="uploadHint">Drop documents here</h3>
-        <p>PDF, JPG, PNG · select multiple files at once</p>
+        <div class="upload-icon">📋</div>
+        <h3>Drop any document here</h3>
+        <p>PDF, JPG, PNG · select multiple files</p>
+        <div class="detect-hint">✦ AI auto-detects document type</div>
       </div>
-      <!-- File queue -->
       <div id="fileQueue" class="file-queue" style="margin-top:8px"></div>
-      <!-- Image preview (single) -->
-      <img class="img-preview" id="imgPreview" alt="Preview" style="margin-top:8px">
+      <img class="img-preview" id="imgPreview" alt="Preview">
     </div>
 
-    <div class="or-row"><div class="or-line"></div><span class="or-text">OR</span><div class="or-line"></div></div>
+    <div class="or-row">
+      <div class="or-line"></div>
+      <span class="or-text">OR</span>
+      <div class="or-line"></div>
+    </div>
 
     <div>
       <div class="section-label">Try a sample</div>
-      <button class="btn-sample" id="sampleBtn" onclick="loadSample()">Use sample document</button>
+      <div style="display:flex;flex-direction:column;gap:6px" id="sampleBtns">
+        <button class="btn-sample" onclick="loadSample('invoice')">🧾 Sample Invoice</button>
+        <button class="btn-sample" onclick="loadSample('bank')">🏦 Sample Bank Statement</button>
+        <button class="btn-sample" onclick="loadSample('flight')">✈️ Sample Flight Ticket</button>
+        <button class="btn-sample" onclick="loadSample('receipt')">🧾 Sample Receipt</button>
+        <button class="btn-sample" onclick="loadSample('expense')">📊 Sample Expense Report</button>
+      </div>
     </div>
 
-    <div class="error-box" id="errorBox"></div>
-    <div class="success-box" id="successBox"></div>
+    <div class="info-box info-red msg-box" id="errorBox"></div>
+    <div class="info-box info-green msg-box" id="successBox"></div>
 
-    <button class="btn-extract" id="extractBtn" onclick="extractAll()" disabled>
+    <button class="extract-btn" id="extractBtn" onclick="extractAll()" disabled>
       <span id="btnLabel">Extract & preview</span>
     </button>
 
-    <div style="font-size:12px;color:var(--text3);text-align:center;line-height:1.6">Connect Google Sheets above to push rows directly, or download CSV anytime.</div>
+    <div style="font-size:11px;color:var(--text3);text-align:center;line-height:1.6">
+      Connect Google Sheets to push rows directly, or download CSV anytime.
+    </div>
   </div>
 
+  <!-- ══ RIGHT PANEL ══ -->
   <div class="right">
-    <div class="sheets-header">
-      <svg class="sheets-logo" viewBox="0 0 48 48"><path fill="#43A047" d="M37,45H11c-1.657,0-3-1.343-3-3V6c0-1.657,1.343-3,3-3h19l10,10v29C40,43.657,38.657,45,37,45z"/><path fill="#C8E6C9" d="M40,13H30V3L40,13z"/><path fill="#2E7D32" d="M30,3l10,10h-10V3z"/><path fill="#fff" d="M15,24h18v2H15V24z M15,28h18v2H15V28z M15,32h11v2H15V32z M15,20h18v2H15V20z"/></svg>
+    <div class="panel-header">
+      <svg width="22" height="22" viewBox="0 0 48 48">
+        <path fill="#43A047" d="M37,45H11c-1.657,0-3-1.343-3-3V6c0-1.657,1.343-3,3-3h19l10,10v29C40,43.657,38.657,45,37,45z"/>
+        <path fill="#C8E6C9" d="M40,13H30V3L40,13z"/>
+        <path fill="#2E7D32" d="M30,3l10,10h-10V3z"/>
+        <path fill="#fff" d="M15,24h18v2H15V24z M15,28h18v2H15V28z M15,32h11v2H15V32z M15,20h18v2H15V20z"/>
+      </svg>
       <div>
-        <div class="sheets-title" id="sheetsTitle">Spreadsheet Preview</div>
-        <div class="sheets-sub" id="sheetsRowCount">0 rows · waiting for document</div>
+        <div class="panel-title" id="panelTitle">Extraction Preview</div>
+        <div class="panel-sub" id="panelSub">Upload documents and extract to see results here</div>
       </div>
     </div>
-    <!-- Result tabs for multi-file -->
     <div id="resultTabs" class="result-tabs" style="display:none"></div>
     <div id="mainContent">
       <div class="empty-state">
-        <div class="empty-icon">📤</div>
-        <h3>No document yet</h3>
-        <p>Select a document type above, upload one or more files, or try the sample.<br>AI extracts the right fields for each type.</p>
+        <div class="empty-icon">🤖</div>
+        <h3>AI Auto-Detection Ready</h3>
+        <p>Upload any document and the AI will automatically identify its type and extract the relevant fields.</p>
+        <div class="detect-tags">
+          <span class="detect-tag">🧾 Invoice</span>
+          <span class="detect-tag">🏦 Bank Statement</span>
+          <span class="detect-tag">✈️ Flight Ticket</span>
+          <span class="detect-tag">🧾 Receipt</span>
+          <span class="detect-tag">📊 Expense Report</span>
+        </div>
       </div>
     </div>
   </div>
-</div>
+
+</div><!-- /layout -->
 
 <script>
-/* ═══════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════
+   CONSTANTS
+═══════════════════════════════════════════════════════ */
+const GEMINI_MODEL = 'gemini-2.0-flash-lite';
+
+/* ═══════════════════════════════════════════════════════
    DOC TYPE SCHEMAS
-═══════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════ */
 const DOC_TYPES = {
-  invoice:{
-    label:'Invoice',emoji:'🧾',uploadHint:'Drop invoice here',sampleLabel:'Use sample invoice',
-    prompt:`You are a professional accountant bot. Extract ALL details from this invoice and return ONLY valid JSON with no markdown.
-Return exactly:
-{"invoice_number":"string","invoice_date":"DD MMM YYYY","due_date":"DD MMM YYYY or null","vendor_name":"string","vendor_gst":"string or null","client_name":"string","line_items":[{"description":"string","amount":number}],"subtotal":number,"tax_percent":number,"tax_amount":number,"total_amount":number,"currency":"USD","payment_method":"string or null","payment_ref":"string or null","payment_status":"Paid or Unpaid or Partial","category":"Software or Services or Utilities or Office or Travel or Marketing or Other","notes":"string or null"}`,
-    sampleText:`INVOICE\nFrom: Nexus Cloud Solutions Pvt. Ltd.  GST: 27AABCN1234C1Z5\nTo: Sharma & Associates LLP, Bengaluru\nInvoice No: NCS-2024-0892  Date: 15 March 2025  Due: 29 March 2025\nItems:\n1. Cloud Server Hosting $12,500\n2. SSL Certificate $2,800\n3. CDN Bandwidth $4,200\n4. Technical Support 10hrs $9,000\nSubtotal: $28,500  GST 18%: $5,130  TOTAL: $33,630\nPayment: Bank Transfer  Ref: NCS-2024-0892  Status: UNPAID`,
-    csvCols:['Invoice #','Date','Due Date','Vendor','Vendor GST','Client','Subtotal','Tax %','Tax Amt','Total','Currency','Payment Method','Payment Ref','Status','Category','Notes'],
-    toCSVRow:d=>[[d.invoice_number,d.invoice_date,d.due_date,d.vendor_name,d.vendor_gst,d.client_name,d.subtotal,d.tax_percent,d.tax_amount,d.total_amount,d.currency||'USD',d.payment_method,d.payment_ref,d.payment_status,d.category,d.notes]],
-    toSheetRow:d=>[[d.invoice_number||'',d.invoice_date||'',d.due_date||'',d.vendor_name||'',d.vendor_gst||'',d.client_name||'',d.subtotal||0,d.tax_percent||0,d.tax_amount||0,d.total_amount||0,d.currency||'USD',d.payment_method||'',d.payment_ref||'',d.payment_status||'',d.category||'',d.notes||'']],
-    renderCards:d=>`
-      <div class="field-card highlight"><div class="field-label">Invoice number</div><div class="field-value">${esc(d.invoice_number||'—')}</div></div>
-      <div class="field-card highlight"><div class="field-label">Total amount</div><div class="field-value amount">${fmt(d.total_amount)}</div></div>
-      <div class="field-card"><div class="field-label">Invoice date</div><div class="field-value">${esc(d.invoice_date||'—')}</div></div>
-      <div class="field-card"><div class="field-label">Due date</div><div class="field-value">${esc(d.due_date||'—')}</div></div>
-      <div class="field-card"><div class="field-label">Vendor / supplier</div><div class="field-value">${esc(d.vendor_name||'—')}</div>${d.vendor_gst?`<div class="confidence high">GST: ${esc(d.vendor_gst)}</div>`:''}</div>
-      <div class="field-card"><div class="field-label">Client / bill-to</div><div class="field-value">${esc(d.client_name||'—')}</div></div>
-      <div class="field-card"><div class="field-label">Subtotal</div><div class="field-value">${fmt(d.subtotal)}</div></div>
-      <div class="field-card"><div class="field-label">Tax / GST</div><div class="field-value">${d.tax_percent||0}% → ${fmt(d.tax_amount)}</div></div>
-      <div class="field-card"><div class="field-label">Payment status</div><div class="field-value ${(d.payment_status||'').toLowerCase()==='paid'?'status-paid':'status-pending'}">${esc(d.payment_status||'—')}</div></div>
-      <div class="field-card"><div class="field-label">Category</div><div class="field-value">${esc(d.category||'—')}</div></div>
-      <div class="field-card" style="grid-column:span 2"><div class="field-label">Payment reference</div><div class="field-value">${esc(d.payment_ref||d.payment_method||'—')}</div></div>`,
-    renderLineItems:d=>d.line_items&&d.line_items.length?`<div class="line-items-section"><div class="line-items-header">Line items (${d.line_items.length})</div><table><thead><tr><th>Description</th><th style="text-align:right">Amount</th></tr></thead><tbody>${d.line_items.map(li=>`<tr><td>${esc(li.description)}</td><td class="td-amount">${fmt(li.amount)}</td></tr>`).join('')}</tbody></table></div>`:''
+  invoice: {
+    label: 'Invoice', emoji: '🧾',
+    bannerClass: 'file-type-invoice',
+    bannerBorder: '#ffb74d', bannerBg: '#fff8f0',
+    prompt: `You are a professional accountant. Extract ALL details from this invoice. Return ONLY valid JSON, no markdown.
+{"invoice_number":"","invoice_date":"DD MMM YYYY","due_date":"DD MMM YYYY or null","vendor_name":"","vendor_gst":"or null","client_name":"","line_items":[{"description":"","amount":0}],"subtotal":0,"tax_percent":0,"tax_amount":0,"total_amount":0,"currency":"USD","payment_method":"or null","payment_ref":"or null","payment_status":"Paid or Unpaid or Partial","category":"Software or Services or Utilities or Office or Travel or Marketing or Other","notes":"or null"}`,
+    sampleText: `INVOICE\nFrom: Nexus Cloud Solutions Pvt. Ltd.  GST: 27AABCN1234C1Z5\nTo: Sharma & Associates LLP, Bengaluru\nInvoice No: NCS-2024-0892  Date: 15 March 2025  Due: 29 March 2025\nItems:\n1. Cloud Server Hosting $12,500\n2. SSL Certificate $2,800\n3. CDN Bandwidth $4,200\n4. Technical Support 10hrs $9,000\nSubtotal: $28,500  GST 18%: $5,130  TOTAL: $33,630\nPayment: Bank Transfer  Ref: NCS-2024-0892  Status: UNPAID`,
+    csvCols: ['Invoice #','Date','Due Date','Vendor','Vendor GST','Client','Subtotal','Tax %','Tax Amt','Total','Currency','Payment Method','Payment Ref','Status','Category','Notes'],
+    toSheetRow: d => [[d.invoice_number||'',d.invoice_date||'',d.due_date||'',d.vendor_name||'',d.vendor_gst||'',d.client_name||'',d.subtotal||0,d.tax_percent||0,d.tax_amount||0,d.total_amount||0,d.currency||'USD',d.payment_method||'',d.payment_ref||'',d.payment_status||'',d.category||'',d.notes||'']],
+    toCSVRow: d => [[d.invoice_number,d.invoice_date,d.due_date,d.vendor_name,d.vendor_gst,d.client_name,d.subtotal,d.tax_percent,d.tax_amount,d.total_amount,d.currency||'USD',d.payment_method,d.payment_ref,d.payment_status,d.category,d.notes]],
+    renderCards: d => `
+      <div class="field-card highlight"><div class="fc-label">Invoice #</div><div class="fc-value">${esc(d.invoice_number||'—')}</div></div>
+      <div class="field-card highlight"><div class="fc-label">Total</div><div class="fc-value amount">${fmt(d.total_amount)}</div></div>
+      <div class="field-card"><div class="fc-label">Date</div><div class="fc-value">${esc(d.invoice_date||'—')}</div></div>
+      <div class="field-card"><div class="fc-label">Due date</div><div class="fc-value">${esc(d.due_date||'—')}</div></div>
+      <div class="field-card"><div class="fc-label">Vendor</div><div class="fc-value">${esc(d.vendor_name||'—')}</div>${d.vendor_gst?`<div class="fc-sub">GST: ${esc(d.vendor_gst)}</div>`:''}</div>
+      <div class="field-card"><div class="fc-label">Client</div><div class="fc-value">${esc(d.client_name||'—')}</div></div>
+      <div class="field-card"><div class="fc-label">Subtotal</div><div class="fc-value">${fmt(d.subtotal)}</div></div>
+      <div class="field-card"><div class="fc-label">Tax</div><div class="fc-value">${d.tax_percent||0}% = ${fmt(d.tax_amount)}</div></div>
+      <div class="field-card"><div class="fc-label">Status</div><div class="fc-value ${(d.payment_status||'').toLowerCase()==='paid'?'status-ok':'status-warn'}">${esc(d.payment_status||'—')}</div></div>
+      <div class="field-card"><div class="fc-label">Category</div><div class="fc-value">${esc(d.category||'—')}</div></div>
+      <div class="field-card"><div class="fc-label">Payment ref</div><div class="fc-value">${esc(d.payment_ref||d.payment_method||'—')}</div></div>
+      <div class="field-card"><div class="fc-label">Currency</div><div class="fc-value">${esc(d.currency||'—')}</div></div>`,
+    renderLineItems: d => d.line_items?.length ? `
+      <div class="table-card">
+        <div class="table-card-header">Line Items <span class="count-badge">${d.line_items.length}</span></div>
+        <table class="data-table"><thead><tr><th>Description</th><th class="td-right">Amount</th></tr></thead>
+        <tbody>${d.line_items.map(li=>`<tr><td>${esc(li.description)}</td><td class="td-right td-num">${fmt(li.amount)}</td></tr>`).join('')}</tbody></table>
+      </div>` : ''
   },
 
-  bank:{
-    label:'Bank Statement',emoji:'🏦',uploadHint:'Drop bank statement here',sampleLabel:'Use sample bank statement',
-    prompt:`You are a banking data extraction bot. Extract ALL transactions from this bank statement and return ONLY valid JSON with no markdown.
-Return exactly:
-{"bank_name":"string","account_number":"string","account_holder":"string","statement_period_from":"DD MMM YYYY","statement_period_to":"DD MMM YYYY","opening_balance":number,"closing_balance":number,"currency":"USD","transactions":[{"date":"DD MMM YYYY","description":"string","reference":"string or null","debit":number or null,"credit":number or null,"balance":number or null,"type":"UPI or NEFT or RTGS or IMPS or ATM or Cheque or Interest or Charge or Other"}],"total_debits":number,"total_credits":number,"notes":"string or null"}`,
-    sampleText:`HDFC BANK Statement\nAccount: Priya Mehta  XXXX4821\nPeriod: 01 Mar 2025 – 31 Mar 2025\nOpening Balance: $52,340\n\n01 Mar  UPI/ZOMATO  UPI123  Dr $450    Bal $51,890\n03 Mar  NEFT/SALARY/TCS  NEFT8821  Cr $95,000  Bal $1,46,890\n05 Mar  ATM WITHDRAWAL  ATM449  Dr $5,000  Bal $1,41,890\n12 Mar  IMPS/ELECTRICITY  IMPS229  Dr $2,300  Bal $1,40,790\n20 Mar  CHEQUE/RENT  CHQ001  Dr $28,000  Bal $1,12,790\n28 Mar  INTEREST CREDIT  INT2025  Cr $312  Bal $1,13,102\n\nClosing: $1,13,102  Total Dr: $35,750  Total Cr: $96,512`,
-    csvCols:['Bank','Account No','Account Holder','Period From','Period To','Date','Description','Reference','Debit','Credit','Balance','Txn Type','Opening Balance','Closing Balance','Currency'],
-    toCSVRow:d=>{if(!d.transactions||!d.transactions.length)return[[d.bank_name,d.account_number,d.account_holder,d.statement_period_from,d.statement_period_to,'','','','','','','',d.opening_balance,d.closing_balance,d.currency||'USD']];return d.transactions.map(t=>[d.bank_name,d.account_number,d.account_holder,d.statement_period_from,d.statement_period_to,t.date,t.description,t.reference,t.debit||'',t.credit||'',t.balance||'',t.type,d.opening_balance,d.closing_balance,d.currency||'USD']);},
-    toSheetRow:d=>{if(!d.transactions||!d.transactions.length)return[[d.bank_name||'',d.account_number||'',d.account_holder||'',d.statement_period_from||'',d.statement_period_to||'','','','','','','','',d.opening_balance||0,d.closing_balance||0,d.currency||'USD']];return d.transactions.map(t=>[d.bank_name||'',d.account_number||'',d.account_holder||'',d.statement_period_from||'',d.statement_period_to||'',t.date||'',t.description||'',t.reference||'',t.debit||0,t.credit||0,t.balance||0,t.type||'',d.opening_balance||0,d.closing_balance||0,d.currency||'USD']);},
-    renderCards:d=>`
-      <div class="field-card highlight"><div class="field-label">Bank</div><div class="field-value">${esc(d.bank_name||'—')}</div></div>
-      <div class="field-card highlight"><div class="field-label">Account holder</div><div class="field-value">${esc(d.account_holder||'—')}</div></div>
-      <div class="field-card"><div class="field-label">Account number</div><div class="field-value">${esc(d.account_number||'—')}</div></div>
-      <div class="field-card"><div class="field-label">Currency</div><div class="field-value">${esc(d.currency||'—')}</div></div>
-      <div class="field-card"><div class="field-label">Period from</div><div class="field-value">${esc(d.statement_period_from||'—')}</div></div>
-      <div class="field-card"><div class="field-label">Period to</div><div class="field-value">${esc(d.statement_period_to||'—')}</div></div>
-      <div class="field-card"><div class="field-label">Opening balance</div><div class="field-value amount">${fmt(d.opening_balance)}</div></div>
-      <div class="field-card"><div class="field-label">Closing balance</div><div class="field-value amount">${fmt(d.closing_balance)}</div></div>
-      <div class="field-card"><div class="field-label">Total debits</div><div class="field-value" style="color:var(--red)">${fmt(d.total_debits)}</div></div>
-      <div class="field-card"><div class="field-label">Total credits</div><div class="field-value status-paid">${fmt(d.total_credits)}</div></div>`,
-    renderLineItems:d=>d.transactions&&d.transactions.length?`<div class="line-items-section"><div class="line-items-header">Transactions (${d.transactions.length})</div><table><thead><tr><th>Date</th><th>Description</th><th>Type</th><th style="text-align:right">Debit</th><th style="text-align:right">Credit</th><th style="text-align:right">Balance</th></tr></thead><tbody>${d.transactions.map(t=>`<tr><td style="white-space:nowrap">${esc(t.date)}</td><td>${esc(t.description)}</td><td><span style="font-size:11px;font-family:var(--mono);background:var(--bg);padding:2px 6px;border-radius:4px">${esc(t.type||'')}</span></td><td class="td-amount" style="color:var(--red)">${t.debit?fmt(t.debit):''}</td><td class="td-amount" style="color:var(--green)">${t.credit?fmt(t.credit):''}</td><td class="td-amount">${t.balance!=null?fmt(t.balance):''}</td></tr>`).join('')}</tbody></table></div>`:''
+  bank: {
+    label: 'Bank Statement', emoji: '🏦',
+    bannerClass: 'file-type-bank',
+    bannerBorder: '#64b5f6', bannerBg: '#e3f2fd',
+    prompt: `You are a banking data extraction bot. Extract ALL transactions from this bank statement. Return ONLY valid JSON, no markdown.
+{"bank_name":"","account_number":"","account_holder":"","statement_period_from":"DD MMM YYYY","statement_period_to":"DD MMM YYYY","opening_balance":0,"closing_balance":0,"currency":"USD","transactions":[{"date":"DD MMM YYYY","description":"","reference":"or null","debit":0,"credit":0,"balance":0,"type":"UPI or NEFT or RTGS or IMPS or ATM or Cheque or Interest or Charge or Other"}],"total_debits":0,"total_credits":0,"notes":"or null"}`,
+    sampleText: `HDFC BANK Statement\nAccount: Priya Mehta  XXXX4821\nPeriod: 01 Mar 2025 – 31 Mar 2025\nOpening Balance: $52,340\n\n01 Mar  UPI/ZOMATO  UPI123  Dr $450    Bal $51,890\n03 Mar  NEFT/SALARY/TCS  NEFT8821  Cr $95,000  Bal $1,46,890\n05 Mar  ATM WITHDRAWAL  ATM449  Dr $5,000  Bal $1,41,890\n12 Mar  IMPS/ELECTRICITY  IMPS229  Dr $2,300  Bal $1,40,790\n20 Mar  CHEQUE/RENT  CHQ001  Dr $28,000  Bal $1,12,790\n28 Mar  INTEREST CREDIT  INT2025  Cr $312  Bal $1,13,102\n\nClosing: $1,13,102  Total Dr: $35,750  Total Cr: $96,512`,
+    csvCols: ['Bank','Account No','Account Holder','Period From','Period To','Date','Description','Reference','Debit','Credit','Balance','Txn Type','Opening Balance','Closing Balance','Currency'],
+    toSheetRow: d => {
+      if (!d.transactions?.length) return [[d.bank_name||'',d.account_number||'',d.account_holder||'',d.statement_period_from||'',d.statement_period_to||'','','','','','','','',d.opening_balance||0,d.closing_balance||0,d.currency||'USD']];
+      return d.transactions.map(t => [d.bank_name||'',d.account_number||'',d.account_holder||'',d.statement_period_from||'',d.statement_period_to||'',t.date||'',t.description||'',t.reference||'',t.debit||0,t.credit||0,t.balance||0,t.type||'',d.opening_balance||0,d.closing_balance||0,d.currency||'USD']);
+    },
+    toCSVRow: d => {
+      if (!d.transactions?.length) return [[d.bank_name,d.account_number,d.account_holder,d.statement_period_from,d.statement_period_to,'','','','','','','',d.opening_balance,d.closing_balance,d.currency||'USD']];
+      return d.transactions.map(t => [d.bank_name,d.account_number,d.account_holder,d.statement_period_from,d.statement_period_to,t.date,t.description,t.reference,t.debit||'',t.credit||'',t.balance||'',t.type,d.opening_balance,d.closing_balance,d.currency||'USD']);
+    },
+    renderCards: d => `
+      <div class="field-card highlight"><div class="fc-label">Bank</div><div class="fc-value">${esc(d.bank_name||'—')}</div></div>
+      <div class="field-card highlight"><div class="fc-label">Account holder</div><div class="fc-value">${esc(d.account_holder||'—')}</div></div>
+      <div class="field-card"><div class="fc-label">Account #</div><div class="fc-value">${esc(d.account_number||'—')}</div></div>
+      <div class="field-card"><div class="fc-label">Currency</div><div class="fc-value">${esc(d.currency||'—')}</div></div>
+      <div class="field-card"><div class="fc-label">Period from</div><div class="fc-value">${esc(d.statement_period_from||'—')}</div></div>
+      <div class="field-card"><div class="fc-label">Period to</div><div class="fc-value">${esc(d.statement_period_to||'—')}</div></div>
+      <div class="field-card"><div class="fc-label">Opening balance</div><div class="fc-value amount">${fmt(d.opening_balance)}</div></div>
+      <div class="field-card"><div class="fc-label">Closing balance</div><div class="fc-value amount">${fmt(d.closing_balance)}</div></div>
+      <div class="field-card"><div class="fc-label">Total debits</div><div class="fc-value" style="color:var(--red)">${fmt(d.total_debits)}</div></div>
+      <div class="field-card"><div class="fc-label">Total credits</div><div class="fc-value status-ok">${fmt(d.total_credits)}</div></div>`,
+    renderLineItems: d => d.transactions?.length ? `
+      <div class="table-card">
+        <div class="table-card-header">Transactions <span class="count-badge">${d.transactions.length}</span></div>
+        <table class="data-table"><thead><tr><th>Date</th><th>Description</th><th>Type</th><th class="td-right">Debit</th><th class="td-right">Credit</th><th class="td-right">Balance</th></tr></thead>
+        <tbody>${d.transactions.map(t=>`<tr>
+          <td style="white-space:nowrap;font-family:var(--mono);font-size:11px">${esc(t.date)}</td>
+          <td>${esc(t.description)}</td>
+          <td><span class="type-chip">${esc(t.type||'')}</span></td>
+          <td class="td-debit">${t.debit?fmt(t.debit):''}</td>
+          <td class="td-credit">${t.credit?fmt(t.credit):''}</td>
+          <td class="td-num td-right">${t.balance!=null?fmt(t.balance):''}</td>
+        </tr>`).join('')}</tbody></table>
+      </div>` : ''
   },
 
-  flight:{
-    label:'Flight Ticket',emoji:'✈️',uploadHint:'Drop flight ticket / e-ticket here',sampleLabel:'Use sample flight ticket',
-    prompt:`You are a travel expense extraction bot. Extract ALL details from this flight ticket and return ONLY valid JSON with no markdown.
-Return exactly:
-{"booking_ref":"string","pnr":"string or null","passenger_name":"string","airline":"string","flight_number":"string","class":"Economy or Business or First or Premium Economy","origin_city":"string","origin_code":"IATA","destination_city":"string","destination_code":"IATA","departure_date":"DD MMM YYYY","departure_time":"HH:MM","arrival_date":"DD MMM YYYY","arrival_time":"HH:MM","duration_minutes":number or null,"stops":number,"baggage_allowance":"string or null","seat_number":"string or null","fare_amount":number,"taxes_fees":number or null,"total_amount":number,"currency":"USD","booking_platform":"string or null","ticket_type":"Domestic or International","status":"Confirmed or Cancelled or Waitlisted","notes":"string or null"}`,
-    sampleText:`IndiGo E-Ticket\nBooking Ref: 6E-BMPQR7  PNR: BMPQR7\nPassenger: Mr. Rahul Verma\nFlight: 6E 214  Class: Economy\nMumbai (BOM) → Delhi (DEL)\nDeparture: 15 Apr 2025 06:10  Arrival: 08:25  Duration: 2h 15m  Non-Stop\nSeat: 14C  Baggage: 15kg + 7kg cabin\nBase Fare: $4,200  Taxes: $1,380  Convenience: $220  TOTAL: $5,800\nBooked via: MakeMyTrip  Status: CONFIRMED`,
-    csvCols:['Booking Ref','PNR','Passenger','Airline','Flight No','Class','From City','From Code','To City','To Code','Dep Date','Dep Time','Arr Date','Arr Time','Duration (min)','Stops','Baggage','Seat','Fare','Taxes','Total','Currency','Platform','Type','Status','Notes'],
-    toCSVRow:d=>[[d.booking_ref,d.pnr,d.passenger_name,d.airline,d.flight_number,d.class,d.origin_city,d.origin_code,d.destination_city,d.destination_code,d.departure_date,d.departure_time,d.arrival_date,d.arrival_time,d.duration_minutes,d.stops,d.baggage_allowance,d.seat_number,d.fare_amount,d.taxes_fees,d.total_amount,d.currency||'USD',d.booking_platform,d.ticket_type,d.status,d.notes]],
-    toSheetRow:d=>[[d.booking_ref||'',d.pnr||'',d.passenger_name||'',d.airline||'',d.flight_number||'',d.class||'',d.origin_city||'',d.origin_code||'',d.destination_city||'',d.destination_code||'',d.departure_date||'',d.departure_time||'',d.arrival_date||'',d.arrival_time||'',d.duration_minutes||0,d.stops||0,d.baggage_allowance||'',d.seat_number||'',d.fare_amount||0,d.taxes_fees||0,d.total_amount||0,d.currency||'USD',d.booking_platform||'',d.ticket_type||'',d.status||'',d.notes||'']],
-    renderCards:d=>`
-      <div class="field-card highlight"><div class="field-label">Booking ref</div><div class="field-value">${esc(d.booking_ref||'—')}</div></div>
-      <div class="field-card highlight"><div class="field-label">Total amount</div><div class="field-value amount">${fmt(d.total_amount)}</div></div>
-      <div class="field-card"><div class="field-label">Passenger</div><div class="field-value">${esc(d.passenger_name||'—')}</div></div>
-      <div class="field-card"><div class="field-label">Airline & flight</div><div class="field-value">${esc(d.airline||'—')} ${esc(d.flight_number||'')}</div></div>
-      <div class="field-card"><div class="field-label">Route</div><div class="field-value">${esc(d.origin_city||'')} (${esc(d.origin_code||'')}) → ${esc(d.destination_city||'')} (${esc(d.destination_code||'')})</div></div>
-      <div class="field-card"><div class="field-label">Class</div><div class="field-value">${esc(d.class||'—')}</div></div>
-      <div class="field-card"><div class="field-label">Departure</div><div class="field-value">${esc(d.departure_date||'—')} ${esc(d.departure_time||'')}</div></div>
-      <div class="field-card"><div class="field-label">Arrival</div><div class="field-value">${esc(d.arrival_date||'—')} ${esc(d.arrival_time||'')}</div></div>
-      <div class="field-card"><div class="field-label">Seat / Baggage</div><div class="field-value">${esc(d.seat_number||'—')} · ${esc(d.baggage_allowance||'—')}</div></div>
-      <div class="field-card"><div class="field-label">Status</div><div class="field-value ${(d.status||'').toLowerCase()==='confirmed'?'status-paid':'status-pending'}">${esc(d.status||'—')}</div></div>
-      <div class="field-card"><div class="field-label">Ticket type</div><div class="field-value">${esc(d.ticket_type||'—')}</div></div>
-      <div class="field-card"><div class="field-label">Booked via</div><div class="field-value">${esc(d.booking_platform||'—')}</div></div>`,
-    renderLineItems:d=>`<div class="line-items-section"><div class="line-items-header">Fare breakdown</div><table><thead><tr><th>Component</th><th style="text-align:right">Amount</th></tr></thead><tbody><tr><td>Base fare</td><td class="td-amount">${fmt(d.fare_amount)}</td></tr>${d.taxes_fees?`<tr><td>Taxes & Fees</td><td class="td-amount">${fmt(d.taxes_fees)}</td></tr>`:''}<tr><td><b>Total paid</b></td><td class="td-amount"><b>${fmt(d.total_amount)}</b></td></tr></tbody></table></div>`
+  flight: {
+    label: 'Flight Ticket', emoji: '✈️',
+    bannerClass: 'file-type-flight',
+    bannerBorder: '#81c784', bannerBg: '#e8f5e9',
+    prompt: `You are a travel expense extraction bot. Extract ALL details from this flight ticket. Return ONLY valid JSON, no markdown.
+{"booking_ref":"","pnr":"or null","passenger_name":"","airline":"","flight_number":"","class":"Economy or Business or First or Premium Economy","origin_city":"","origin_code":"IATA","destination_city":"","destination_code":"IATA","departure_date":"DD MMM YYYY","departure_time":"HH:MM","arrival_date":"DD MMM YYYY","arrival_time":"HH:MM","duration_minutes":0,"stops":0,"baggage_allowance":"or null","seat_number":"or null","fare_amount":0,"taxes_fees":0,"total_amount":0,"currency":"USD","booking_platform":"or null","ticket_type":"Domestic or International","status":"Confirmed or Cancelled or Waitlisted","notes":"or null"}`,
+    sampleText: `IndiGo E-Ticket\nBooking Ref: 6E-BMPQR7  PNR: BMPQR7\nPassenger: Mr. Rahul Verma\nFlight: 6E 214  Class: Economy\nMumbai (BOM) → Delhi (DEL)\nDeparture: 15 Apr 2025 06:10  Arrival: 08:25  Duration: 2h 15m  Non-Stop\nSeat: 14C  Baggage: 15kg + 7kg cabin\nBase Fare: $4,200  Taxes: $1,380  Convenience: $220  TOTAL: $5,800\nBooked via: MakeMyTrip  Status: CONFIRMED`,
+    csvCols: ['Booking Ref','PNR','Passenger','Airline','Flight No','Class','From City','From Code','To City','To Code','Dep Date','Dep Time','Arr Date','Arr Time','Duration (min)','Stops','Baggage','Seat','Fare','Taxes','Total','Currency','Platform','Type','Status','Notes'],
+    toSheetRow: d => [[d.booking_ref||'',d.pnr||'',d.passenger_name||'',d.airline||'',d.flight_number||'',d.class||'',d.origin_city||'',d.origin_code||'',d.destination_city||'',d.destination_code||'',d.departure_date||'',d.departure_time||'',d.arrival_date||'',d.arrival_time||'',d.duration_minutes||0,d.stops||0,d.baggage_allowance||'',d.seat_number||'',d.fare_amount||0,d.taxes_fees||0,d.total_amount||0,d.currency||'USD',d.booking_platform||'',d.ticket_type||'',d.status||'',d.notes||'']],
+    toCSVRow: d => [[d.booking_ref,d.pnr,d.passenger_name,d.airline,d.flight_number,d.class,d.origin_city,d.origin_code,d.destination_city,d.destination_code,d.departure_date,d.departure_time,d.arrival_date,d.arrival_time,d.duration_minutes,d.stops,d.baggage_allowance,d.seat_number,d.fare_amount,d.taxes_fees,d.total_amount,d.currency||'USD',d.booking_platform,d.ticket_type,d.status,d.notes]],
+    renderCards: d => `
+      <div class="field-card highlight"><div class="fc-label">Booking ref</div><div class="fc-value">${esc(d.booking_ref||'—')}</div>${d.pnr?`<div class="fc-sub">PNR: ${esc(d.pnr)}</div>`:''}</div>
+      <div class="field-card highlight"><div class="fc-label">Total</div><div class="fc-value amount">${fmt(d.total_amount)}</div></div>
+      <div class="field-card"><div class="fc-label">Passenger</div><div class="fc-value">${esc(d.passenger_name||'—')}</div></div>
+      <div class="field-card"><div class="fc-label">Flight</div><div class="fc-value">${esc(d.airline||'—')} ${esc(d.flight_number||'')}</div></div>
+      <div class="field-card"><div class="fc-label">From</div><div class="fc-value">${esc(d.origin_city||'—')}</div><div class="fc-sub">${esc(d.origin_code||'')}</div></div>
+      <div class="field-card"><div class="fc-label">To</div><div class="fc-value">${esc(d.destination_city||'—')}</div><div class="fc-sub">${esc(d.destination_code||'')}</div></div>
+      <div class="field-card"><div class="fc-label">Departure</div><div class="fc-value">${esc(d.departure_date||'—')}</div><div class="fc-sub">${esc(d.departure_time||'')}</div></div>
+      <div class="field-card"><div class="fc-label">Arrival</div><div class="fc-value">${esc(d.arrival_date||'—')}</div><div class="fc-sub">${esc(d.arrival_time||'')}</div></div>
+      <div class="field-card"><div class="fc-label">Class</div><div class="fc-value">${esc(d.class||'—')}</div></div>
+      <div class="field-card"><div class="fc-label">Seat / Baggage</div><div class="fc-value">${esc(d.seat_number||'—')}</div><div class="fc-sub">${esc(d.baggage_allowance||'—')}</div></div>
+      <div class="field-card"><div class="fc-label">Status</div><div class="fc-value ${(d.status||'').toLowerCase()==='confirmed'?'status-ok':'status-warn'}">${esc(d.status||'—')}</div></div>
+      <div class="field-card"><div class="fc-label">Platform</div><div class="fc-value">${esc(d.booking_platform||'—')}</div></div>`,
+    renderLineItems: d => `
+      <div class="table-card">
+        <div class="table-card-header">Fare Breakdown</div>
+        <table class="data-table"><thead><tr><th>Component</th><th class="td-right">Amount</th></tr></thead>
+        <tbody>
+          <tr><td>Base fare</td><td class="td-right td-num">${fmt(d.fare_amount)}</td></tr>
+          ${d.taxes_fees ? `<tr><td>Taxes &amp; fees</td><td class="td-right td-num">${fmt(d.taxes_fees)}</td></tr>` : ''}
+          <tr><td><strong>Total paid</strong></td><td class="td-right" style="font-family:var(--mono);font-weight:700;color:var(--green)">${fmt(d.total_amount)}</td></tr>
+        </tbody></table>
+      </div>`
   },
 
-  receipt:{
-    label:'Receipt',emoji:'🧾',uploadHint:'Drop receipt here',sampleLabel:'Use sample receipt',
-    prompt:`You are a receipt parsing bot. Extract ALL details from this receipt and return ONLY valid JSON with no markdown.
-Return exactly:
-{"receipt_number":"string or null","date":"DD MMM YYYY","time":"HH:MM or null","merchant_name":"string","merchant_category":"Food and Dining or Groceries or Retail or Fuel or Healthcare or Entertainment or Transport or Utilities or Other","merchant_address":"string or null","items":[{"description":"string","qty":number,"unit_price":number,"amount":number}],"subtotal":number,"discount":number or null,"tax_amount":number or null,"tip":number or null,"total_amount":number,"currency":"USD","payment_method":"Cash or UPI or Card or Wallet or Other","card_last4":"string or null","status":"Paid or Refunded","notes":"string or null"}`,
-    sampleText:`SWIGGY INSTAMART Order #SWG-20250315-8821\n15 Mar 2025  14:32\nMerchant: Big Basket Grocery Delivery\n\n1. Amul Butter 500g  x1  $295\n2. Tata Salt 1kg  x2  $80\n3. Britannia Bread  x1  $55\n4. Haldiram Namkeen  x1  $120\n5. Tropicana Orange 1L  x1  $135\n\nSubtotal: $685  Delivery: $29  Platform: $5  Coupon -10%: -$68.50\nTOTAL PAID: $650.50\nPayment: UPI (GPay)  Status: Paid`,
-    csvCols:['Receipt #','Date','Time','Merchant','Category','Merchant Address','Subtotal','Discount','Tax','Tip','Total','Currency','Payment Method','Card Last 4','Status','Notes'],
-    toCSVRow:d=>[[d.receipt_number,d.date,d.time,d.merchant_name,d.merchant_category,d.merchant_address,d.subtotal,d.discount,d.tax_amount,d.tip,d.total_amount,d.currency||'USD',d.payment_method,d.card_last4,d.status,d.notes]],
-    toSheetRow:d=>[[d.receipt_number||'',d.date||'',d.time||'',d.merchant_name||'',d.merchant_category||'',d.merchant_address||'',d.subtotal||0,d.discount||0,d.tax_amount||0,d.tip||0,d.total_amount||0,d.currency||'USD',d.payment_method||'',d.card_last4||'',d.status||'',d.notes||'']],
-    renderCards:d=>`
-      <div class="field-card highlight"><div class="field-label">Merchant</div><div class="field-value">${esc(d.merchant_name||'—')}</div></div>
-      <div class="field-card highlight"><div class="field-label">Total paid</div><div class="field-value amount">${fmt(d.total_amount)}</div></div>
-      <div class="field-card"><div class="field-label">Date & time</div><div class="field-value">${esc(d.date||'—')} ${esc(d.time||'')}</div></div>
-      <div class="field-card"><div class="field-label">Category</div><div class="field-value">${esc(d.merchant_category||'—')}</div></div>
-      <div class="field-card"><div class="field-label">Subtotal</div><div class="field-value">${fmt(d.subtotal)}</div></div>
-      <div class="field-card"><div class="field-label">Discount</div><div class="field-value" style="color:var(--red)">${d.discount?'-'+fmt(d.discount):'—'}</div></div>
-      <div class="field-card"><div class="field-label">Payment method</div><div class="field-value">${esc(d.payment_method||'—')}${d.card_last4?' ···'+esc(d.card_last4):''}</div></div>
-      <div class="field-card"><div class="field-label">Status</div><div class="field-value ${(d.status||'').toLowerCase()==='paid'?'status-paid':'status-pending'}">${esc(d.status||'—')}</div></div>
-      ${d.merchant_address?`<div class="field-card" style="grid-column:span 2"><div class="field-label">Merchant address</div><div class="field-value">${esc(d.merchant_address)}</div></div>`:''}`,
-    renderLineItems:d=>d.items&&d.items.length?`<div class="line-items-section"><div class="line-items-header">Items (${d.items.length})</div><table><thead><tr><th>Item</th><th style="text-align:right">Qty</th><th style="text-align:right">Unit</th><th style="text-align:right">Amount</th></tr></thead><tbody>${d.items.map(it=>`<tr><td>${esc(it.description)}</td><td class="td-amount">${it.qty||1}</td><td class="td-amount">${fmt(it.unit_price)}</td><td class="td-amount">${fmt(it.amount)}</td></tr>`).join('')}</tbody></table></div>`:''
+  receipt: {
+    label: 'Receipt', emoji: '🧾',
+    bannerClass: 'file-type-receipt',
+    bannerBorder: '#ef9a9a', bannerBg: '#fce4ec',
+    prompt: `You are a receipt parsing bot. Extract ALL details from this receipt. Return ONLY valid JSON, no markdown.
+{"receipt_number":"or null","date":"DD MMM YYYY","time":"HH:MM or null","merchant_name":"","merchant_category":"Food and Dining or Groceries or Retail or Fuel or Healthcare or Entertainment or Transport or Utilities or Other","merchant_address":"or null","items":[{"description":"","qty":1,"unit_price":0,"amount":0}],"subtotal":0,"discount":0,"tax_amount":0,"tip":0,"total_amount":0,"currency":"USD","payment_method":"Cash or UPI or Card or Wallet or Other","card_last4":"or null","status":"Paid or Refunded","notes":"or null"}`,
+    sampleText: `SWIGGY INSTAMART Order #SWG-20250315-8821\n15 Mar 2025  14:32\nMerchant: Big Basket Grocery Delivery\n\n1. Amul Butter 500g  x1  $295\n2. Tata Salt 1kg  x2  $80\n3. Britannia Bread  x1  $55\n4. Haldiram Namkeen  x1  $120\n5. Tropicana Orange 1L  x1  $135\n\nSubtotal: $685  Delivery: $29  Platform: $5  Coupon -10%: -$68.50\nTOTAL PAID: $650.50\nPayment: UPI (GPay)  Status: Paid`,
+    csvCols: ['Receipt #','Date','Time','Merchant','Category','Merchant Address','Subtotal','Discount','Tax','Tip','Total','Currency','Payment Method','Card Last 4','Status','Notes'],
+    toSheetRow: d => [[d.receipt_number||'',d.date||'',d.time||'',d.merchant_name||'',d.merchant_category||'',d.merchant_address||'',d.subtotal||0,d.discount||0,d.tax_amount||0,d.tip||0,d.total_amount||0,d.currency||'USD',d.payment_method||'',d.card_last4||'',d.status||'',d.notes||'']],
+    toCSVRow: d => [[d.receipt_number,d.date,d.time,d.merchant_name,d.merchant_category,d.merchant_address,d.subtotal,d.discount,d.tax_amount,d.tip,d.total_amount,d.currency||'USD',d.payment_method,d.card_last4,d.status,d.notes]],
+    renderCards: d => `
+      <div class="field-card highlight"><div class="fc-label">Merchant</div><div class="fc-value">${esc(d.merchant_name||'—')}</div></div>
+      <div class="field-card highlight"><div class="fc-label">Total paid</div><div class="fc-value amount">${fmt(d.total_amount)}</div></div>
+      <div class="field-card"><div class="fc-label">Date & time</div><div class="fc-value">${esc(d.date||'—')}</div><div class="fc-sub">${esc(d.time||'')}</div></div>
+      <div class="field-card"><div class="fc-label">Category</div><div class="fc-value">${esc(d.merchant_category||'—')}</div></div>
+      <div class="field-card"><div class="fc-label">Subtotal</div><div class="fc-value">${fmt(d.subtotal)}</div></div>
+      <div class="field-card"><div class="fc-label">Discount</div><div class="fc-value" style="color:var(--red)">${d.discount?'-'+fmt(d.discount):'—'}</div></div>
+      <div class="field-card"><div class="fc-label">Payment</div><div class="fc-value">${esc(d.payment_method||'—')}${d.card_last4?' ···'+esc(d.card_last4):''}</div></div>
+      <div class="field-card"><div class="fc-label">Status</div><div class="fc-value ${(d.status||'').toLowerCase()==='paid'?'status-ok':'status-warn'}">${esc(d.status||'—')}</div></div>
+      ${d.merchant_address?`<div class="field-card" style="grid-column:span 2"><div class="fc-label">Address</div><div class="fc-value" style="font-size:12px">${esc(d.merchant_address)}</div></div>`:''}`,
+    renderLineItems: d => d.items?.length ? `
+      <div class="table-card">
+        <div class="table-card-header">Items <span class="count-badge">${d.items.length}</span></div>
+        <table class="data-table"><thead><tr><th>Item</th><th class="td-right">Qty</th><th class="td-right">Unit price</th><th class="td-right">Amount</th></tr></thead>
+        <tbody>${d.items.map(it=>`<tr><td>${esc(it.description)}</td><td class="td-right td-num">${it.qty||1}</td><td class="td-right td-num">${fmt(it.unit_price)}</td><td class="td-right td-num">${fmt(it.amount)}</td></tr>`).join('')}</tbody></table>
+      </div>` : ''
   },
 
-  expense:{
-    label:'Expense Report',emoji:'📊',uploadHint:'Drop expense report here',sampleLabel:'Use sample expense report',
-    prompt:`You are an expense management bot. Extract ALL details from this expense report and return ONLY valid JSON with no markdown.
-Return exactly:
-{"report_id":"string or null","employee_name":"string","employee_id":"string or null","department":"string or null","report_title":"string","period_from":"DD MMM YYYY","period_to":"DD MMM YYYY","submitted_date":"DD MMM YYYY or null","approved_by":"string or null","expenses":[{"date":"DD MMM YYYY","category":"Travel or Meals or Accommodation or Office Supplies or Communication or Marketing or Other","description":"string","vendor":"string or null","amount":number,"currency":"USD","receipt_ref":"string or null","reimbursable":true}],"total_amount":number,"reimbursable_amount":number,"currency":"USD","status":"Draft or Submitted or Approved or Rejected or Paid","notes":"string or null"}`,
-    sampleText:`EXPENSE REPORT — TCS\nReport ID: EXP-2025-0312  Employee: Anika Sharma  ID: TCS-4421  Dept: Business Dev\nPeriod: 10–12 Mar 2025  Submitted: 14 Mar 2025  Approved: Vikram Nair\n\n10 Mar  Travel  Flight BOM-HYD (IndiGo)  MakeMyTrip  $5,800\n10 Mar  Accommodation  Hotel Marriott Hyd  Marriott  $8,200\n11 Mar  Meals  Team dinner with client  ITC Kakatiya  $3,400\n11 Mar  Travel  Cab to client office  Ola  $380\n12 Mar  Meals  Working lunch  Hotel Marriott  $1,100\n12 Mar  Travel  Flight HYD-BOM  MakeMyTrip  $5,200\n\nTotal: $24,080  Reimbursable: $24,080  Status: APPROVED`,
-    csvCols:['Report ID','Employee','Employee ID','Department','Report Title','Period From','Period To','Submitted','Approved By','Date','Category','Description','Vendor','Amount','Currency','Receipt Ref','Reimbursable','Total Amount','Reimbursable Amt','Status','Notes'],
-    toCSVRow:d=>{if(!d.expenses||!d.expenses.length)return[[d.report_id,d.employee_name,d.employee_id,d.department,d.report_title,d.period_from,d.period_to,d.submitted_date,d.approved_by,'','','','','','','','',d.total_amount,d.reimbursable_amount,d.status,d.notes]];return d.expenses.map(e=>[d.report_id,d.employee_name,d.employee_id,d.department,d.report_title,d.period_from,d.period_to,d.submitted_date,d.approved_by,e.date,e.category,e.description,e.vendor,e.amount,e.currency||'USD',e.receipt_ref,e.reimbursable?'Yes':'No',d.total_amount,d.reimbursable_amount,d.status,d.notes]);},
-    toSheetRow:d=>{if(!d.expenses||!d.expenses.length)return[[d.report_id||'',d.employee_name||'',d.employee_id||'',d.department||'',d.report_title||'',d.period_from||'',d.period_to||'',d.submitted_date||'',d.approved_by||'','','','','','','','','',d.total_amount||0,d.reimbursable_amount||0,d.status||'',d.notes||'']];return d.expenses.map(e=>[d.report_id||'',d.employee_name||'',d.employee_id||'',d.department||'',d.report_title||'',d.period_from||'',d.period_to||'',d.submitted_date||'',d.approved_by||'',e.date||'',e.category||'',e.description||'',e.vendor||'',e.amount||0,e.currency||'USD',e.receipt_ref||'',e.reimbursable?'Yes':'No',d.total_amount||0,d.reimbursable_amount||0,d.status||'',d.notes||'']);},
-    renderCards:d=>`
-      <div class="field-card highlight"><div class="field-label">Employee</div><div class="field-value">${esc(d.employee_name||'—')}</div>${d.department?`<div class="confidence high">${esc(d.department)}</div>`:''}</div>
-      <div class="field-card highlight"><div class="field-label">Total amount</div><div class="field-value amount">${fmt(d.total_amount)}</div></div>
-      <div class="field-card"><div class="field-label">Report</div><div class="field-value">${esc(d.report_title||'—')}</div></div>
-      <div class="field-card"><div class="field-label">Report ID</div><div class="field-value">${esc(d.report_id||'—')}</div></div>
-      <div class="field-card"><div class="field-label">Period</div><div class="field-value">${esc(d.period_from||'—')} → ${esc(d.period_to||'—')}</div></div>
-      <div class="field-card"><div class="field-label">Status</div><div class="field-value ${(d.status||'').toLowerCase()==='approved'?'status-paid':'status-pending'}">${esc(d.status||'—')}</div></div>
-      <div class="field-card"><div class="field-label">Reimbursable</div><div class="field-value status-paid">${fmt(d.reimbursable_amount)}</div></div>
-      <div class="field-card"><div class="field-label">Approved by</div><div class="field-value">${esc(d.approved_by||'—')}</div></div>`,
-    renderLineItems:d=>d.expenses&&d.expenses.length?`<div class="line-items-section"><div class="line-items-header">Expenses (${d.expenses.length})</div><table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Vendor</th><th style="text-align:right">Amount</th></tr></thead><tbody>${d.expenses.map(e=>`<tr><td style="white-space:nowrap">${esc(e.date)}</td><td><span style="font-size:11px;font-family:var(--mono);background:var(--bg);padding:2px 6px;border-radius:4px">${esc(e.category)}</span></td><td>${esc(e.description)}</td><td style="color:var(--text2)">${esc(e.vendor||'')}</td><td class="td-amount">${fmt(e.amount)}</td></tr>`).join('')}</tbody></table></div>`:''
+  expense: {
+    label: 'Expense Report', emoji: '📊',
+    bannerClass: 'file-type-expense',
+    bannerBorder: '#ce93d8', bannerBg: '#f3e5f5',
+    prompt: `You are an expense management bot. Extract ALL details from this expense report. Return ONLY valid JSON, no markdown.
+{"report_id":"or null","employee_name":"","employee_id":"or null","department":"or null","report_title":"","period_from":"DD MMM YYYY","period_to":"DD MMM YYYY","submitted_date":"DD MMM YYYY or null","approved_by":"or null","expenses":[{"date":"DD MMM YYYY","category":"Travel or Meals or Accommodation or Office Supplies or Communication or Marketing or Other","description":"","vendor":"or null","amount":0,"currency":"USD","receipt_ref":"or null","reimbursable":true}],"total_amount":0,"reimbursable_amount":0,"currency":"USD","status":"Draft or Submitted or Approved or Rejected or Paid","notes":"or null"}`,
+    sampleText: `EXPENSE REPORT — TCS\nReport ID: EXP-2025-0312  Employee: Anika Sharma  ID: TCS-4421  Dept: Business Dev\nPeriod: 10–12 Mar 2025  Submitted: 14 Mar 2025  Approved: Vikram Nair\n\n10 Mar  Travel  Flight BOM-HYD (IndiGo)  MakeMyTrip  $5,800\n10 Mar  Accommodation  Hotel Marriott Hyd  Marriott  $8,200\n11 Mar  Meals  Team dinner with client  ITC Kakatiya  $3,400\n11 Mar  Travel  Cab to client office  Ola  $380\n12 Mar  Meals  Working lunch  Hotel Marriott  $1,100\n12 Mar  Travel  Flight HYD-BOM  MakeMyTrip  $5,200\n\nTotal: $24,080  Reimbursable: $24,080  Status: APPROVED`,
+    csvCols: ['Report ID','Employee','Employee ID','Department','Report Title','Period From','Period To','Submitted','Approved By','Date','Category','Description','Vendor','Amount','Currency','Receipt Ref','Reimbursable','Total Amount','Reimbursable Amt','Status','Notes'],
+    toSheetRow: d => {
+      if (!d.expenses?.length) return [[d.report_id||'',d.employee_name||'',d.employee_id||'',d.department||'',d.report_title||'',d.period_from||'',d.period_to||'',d.submitted_date||'',d.approved_by||'','','','','','','','','',d.total_amount||0,d.reimbursable_amount||0,d.status||'',d.notes||'']];
+      return d.expenses.map(e => [d.report_id||'',d.employee_name||'',d.employee_id||'',d.department||'',d.report_title||'',d.period_from||'',d.period_to||'',d.submitted_date||'',d.approved_by||'',e.date||'',e.category||'',e.description||'',e.vendor||'',e.amount||0,e.currency||'USD',e.receipt_ref||'',e.reimbursable?'Yes':'No',d.total_amount||0,d.reimbursable_amount||0,d.status||'',d.notes||'']);
+    },
+    toCSVRow: d => {
+      if (!d.expenses?.length) return [[d.report_id,d.employee_name,d.employee_id,d.department,d.report_title,d.period_from,d.period_to,d.submitted_date,d.approved_by,'','','','','','','','',d.total_amount,d.reimbursable_amount,d.status,d.notes]];
+      return d.expenses.map(e => [d.report_id,d.employee_name,d.employee_id,d.department,d.report_title,d.period_from,d.period_to,d.submitted_date,d.approved_by,e.date,e.category,e.description,e.vendor,e.amount,e.currency||'USD',e.receipt_ref,e.reimbursable?'Yes':'No',d.total_amount,d.reimbursable_amount,d.status,d.notes]);
+    },
+    renderCards: d => `
+      <div class="field-card highlight"><div class="fc-label">Employee</div><div class="fc-value">${esc(d.employee_name||'—')}</div>${d.department?`<div class="fc-sub">${esc(d.department)}</div>`:''}</div>
+      <div class="field-card highlight"><div class="fc-label">Total</div><div class="fc-value amount">${fmt(d.total_amount)}</div></div>
+      <div class="field-card"><div class="fc-label">Report</div><div class="fc-value">${esc(d.report_title||'—')}</div></div>
+      <div class="field-card"><div class="fc-label">Report ID</div><div class="fc-value">${esc(d.report_id||'—')}</div></div>
+      <div class="field-card"><div class="fc-label">Period</div><div class="fc-value">${esc(d.period_from||'—')}</div><div class="fc-sub">→ ${esc(d.period_to||'—')}</div></div>
+      <div class="field-card"><div class="fc-label">Status</div><div class="fc-value ${(d.status||'').toLowerCase()==='approved'?'status-ok':'status-warn'}">${esc(d.status||'—')}</div></div>
+      <div class="field-card"><div class="fc-label">Reimbursable</div><div class="fc-value status-ok">${fmt(d.reimbursable_amount)}</div></div>
+      <div class="field-card"><div class="fc-label">Approved by</div><div class="fc-value">${esc(d.approved_by||'—')}</div></div>`,
+    renderLineItems: d => d.expenses?.length ? `
+      <div class="table-card">
+        <div class="table-card-header">Expenses <span class="count-badge">${d.expenses.length}</span></div>
+        <table class="data-table"><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Vendor</th><th class="td-right">Amount</th></tr></thead>
+        <tbody>${d.expenses.map(e=>`<tr>
+          <td style="white-space:nowrap;font-family:var(--mono);font-size:11px">${esc(e.date)}</td>
+          <td><span class="type-chip">${esc(e.category)}</span></td>
+          <td>${esc(e.description)}</td>
+          <td style="color:var(--text3)">${esc(e.vendor||'')}</td>
+          <td class="td-right td-num">${fmt(e.amount)}</td>
+        </tr>`).join('')}</tbody></table>
+      </div>` : ''
   }
 };
 
-/* ═══════════════════════════════════════════════════
-   STATE
-═══════════════════════════════════════════════════ */
-const GEMINI_MODEL = 'gemini-3.1-flash-lite';
+/* ═══════════════════════════════════════════════════════
+   AUTO-DETECTION PROMPT
+═══════════════════════════════════════════════════════ */
+const DETECT_PROMPT = `Analyze this document and determine its type. Return ONLY one of these exact strings, nothing else:
+invoice
+bank
+flight
+receipt
+expense
+If you cannot determine the type, return: invoice`;
 
-let currentType = 'invoice';
-let fileQueue = []; // [{file, name, size, base64, status, data, error}]
+/* ═══════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════ */
+let fileQueue = [];     // [{file, name, size, base64, status, detectedType, data, error, pushed}]
 let isSample = false;
+let sampleType = null;
 let rowCount = 0;
-let allExtracted = [];
+let allExtracted = []; // [{type, data, name}]
 let geminiKey = null;
-let appsScriptUrl = null, sheetsSpreadsheetId = null, sheetsSheetName = 'Sheet1';
-let sheetsConnected = false, sheetsRowsPushed = 0;
+let appsScriptUrl = null;
+let sheetsSpreadsheetId = null;
+let sheetsSheetName = 'Sheet1';
+let sheetsConnected = false;
+let sheetsRowsPushed = 0;
 let activeResultIdx = 0;
 
-/* ═══════════════════════════════════════════════════
-   INIT
-═══════════════════════════════════════════════════ */
-function init() {
-  const bar = document.getElementById('typeBar');
-  bar.innerHTML = Object.entries(DOC_TYPES).map(([key,t]) =>
-    `<button class="type-btn ${key===currentType?'active':''}" onclick="selectType('${key}')" id="typeBtn_${key}"><span class="type-emoji">${t.emoji}</span>${t.label}</button>`
-  ).join('');
-  updateHints();
-}
-
-function selectType(key) {
-  currentType = key;
-  document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('typeBtn_'+key).classList.add('active');
-  clearQueue();
-  updateHints();
-  const t = DOC_TYPES[key];
-  document.getElementById('mainContent').innerHTML = `<div class="empty-state"><div class="empty-icon">${t.emoji}</div><h3>Ready for ${t.label}</h3><p>Upload one or more files, or try the sample.</p></div>`;
-  document.getElementById('resultTabs').style.display = 'none';
-}
-
-function updateHints() {
-  const t = DOC_TYPES[currentType];
-  document.getElementById('uploadHint').textContent = t.uploadHint;
-  document.getElementById('sampleBtn').textContent = t.sampleLabel;
-}
-
-/* ═══════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════
    GEMINI KEY
-═══════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════ */
 function saveGeminiKey() {
   const key = document.getElementById('geminiKeyInput').value.trim();
   if (!key) { showError('Please enter your Gemini API key.'); return; }
   geminiKey = key;
   document.getElementById('geminiForm').style.display = 'none';
   document.getElementById('geminiConnectedInfo').style.display = 'flex';
-  document.getElementById('geminiStatus').className = 'connect-status connected';
-  document.getElementById('geminiStatus').textContent = 'Key saved ✓';
+  document.getElementById('geminiStatus').className = 'badge badge-connected';
+  document.getElementById('geminiStatus').textContent = 'Active ✓';
   updateExtractBtn();
-  showSuccess('✅ Gemini API key saved! Using gemini-3.1-flash-lite.');
+  showSuccess('✅ Gemini API key saved!');
   saveUserSettings();
 }
 
@@ -624,44 +1126,47 @@ function clearGeminiKey() {
   geminiKey = null;
   document.getElementById('geminiForm').style.display = 'flex';
   document.getElementById('geminiConnectedInfo').style.display = 'none';
-  document.getElementById('geminiStatus').className = 'connect-status disconnected';
+  document.getElementById('geminiStatus').className = 'badge badge-disconnected';
   document.getElementById('geminiStatus').textContent = 'Not set';
   document.getElementById('geminiKeyInput').value = '';
   updateExtractBtn();
 }
 
-/* ═══════════════════════════════════════════════════
-   SHEETS CONNECT (Apps Script OAuth method)
-═══════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   SHEETS CONNECT
+═══════════════════════════════════════════════════════ */
 function connectSheets() {
   const url = document.getElementById('appsScriptUrl').value.trim();
   const id = document.getElementById('sheetIdInput').value.trim();
   const name = document.getElementById('sheetNameInput').value.trim() || 'Sheet1';
-  if (!url) { showError('Please enter the Apps Script Web App URL to enable direct push to Sheets.'); return; }
+  if (!url) { showError('Please enter the Apps Script Web App URL.'); return; }
   if (!id) { showError('Please enter your Spreadsheet ID.'); return; }
-  appsScriptUrl = url; sheetsSpreadsheetId = id; sheetsSheetName = name;
+  appsScriptUrl = url;
+  sheetsSpreadsheetId = id;
+  sheetsSheetName = name;
   sheetsConnected = true;
-  document.getElementById('connectStatus').className = 'connect-status connected';
+  document.getElementById('connectStatus').className = 'badge badge-connected';
   document.getElementById('connectStatus').textContent = 'Connected ✓';
   document.getElementById('connectForm').style.display = 'none';
   document.getElementById('connectedInfo').style.display = 'flex';
-  document.getElementById('connectedSheetId').textContent = `📊 ${id.slice(0,24)}… / ${name}`;
+  document.getElementById('connectedSheetId').textContent = `📊 ${id.slice(0,28)}… / ${name}`;
   document.getElementById('connectedRowsSent').textContent = '0 rows pushed';
-  showSuccess('✅ Google Sheets connected via Apps Script!');
+  showSuccess('✅ Google Sheets connected!');
   saveUserSettings();
 }
 
 function disconnectSheets() {
-  appsScriptUrl = null; sheetsSpreadsheetId = null; sheetsConnected = false; sheetsRowsPushed = 0;
-  document.getElementById('connectStatus').className = 'connect-status disconnected';
-  document.getElementById('connectStatus').textContent = 'Not connected';
+  appsScriptUrl = null; sheetsSpreadsheetId = null;
+  sheetsConnected = false; sheetsRowsPushed = 0;
+  document.getElementById('connectStatus').className = 'badge badge-disconnected';
+  document.getElementById('connectStatus').textContent = 'Disconnected';
   document.getElementById('connectForm').style.display = 'flex';
   document.getElementById('connectedInfo').style.display = 'none';
 }
 
-/* ═══════════════════════════════════════════════════
-   FILE HANDLING — MULTI-FILE QUEUE
-═══════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   FILE HANDLING
+═══════════════════════════════════════════════════════ */
 function dragOver(e) { e.preventDefault(); document.getElementById('uploadZone').classList.add('drag'); }
 function dragLeave() { document.getElementById('uploadZone').classList.remove('drag'); }
 function dropFiles(e) {
@@ -672,9 +1177,10 @@ function dropFiles(e) {
 
 function handleFiles(files) {
   isSample = false;
+  sampleType = null;
   for (const file of files) {
     if (!file.type.match(/^image\/|application\/pdf/)) continue;
-    const item = { file, name: file.name, size: file.size, base64: null, status: 'pending', data: null, error: null };
+    const item = { file, name: file.name, size: file.size, base64: null, status: 'pending', detectedType: null, data: null, error: null, pushed: false };
     fileQueue.push(item);
     readFileBase64(item);
   }
@@ -687,7 +1193,6 @@ function readFileBase64(item) {
   const r = new FileReader();
   r.onload = e => {
     item.base64 = e.target.result.split(',')[1];
-    // Show image preview for single image
     if (fileQueue.length === 1 && item.file.type.startsWith('image/')) {
       const img = document.getElementById('imgPreview');
       img.src = e.target.result;
@@ -701,7 +1206,7 @@ function removeFile(idx) {
   fileQueue.splice(idx, 1);
   renderQueue();
   updateExtractBtn();
-  if (fileQueue.length === 0) {
+  if (!fileQueue.length) {
     document.getElementById('imgPreview').classList.remove('visible');
     setStep(1);
   }
@@ -710,6 +1215,7 @@ function removeFile(idx) {
 function clearQueue() {
   fileQueue = [];
   isSample = false;
+  sampleType = null;
   renderQueue();
   document.getElementById('imgPreview').classList.remove('visible');
   document.getElementById('fileInput').value = '';
@@ -721,147 +1227,212 @@ function clearQueue() {
 function renderQueue() {
   const qEl = document.getElementById('fileQueue');
   const zone = document.getElementById('uploadZone');
-  if (fileQueue.length === 0) {
-    qEl.innerHTML = '';
-    zone.style.display = '';
-    return;
-  }
+  if (!fileQueue.length) { qEl.innerHTML = ''; zone.style.display = ''; return; }
   zone.style.display = fileQueue.length >= 5 ? 'none' : '';
-  qEl.innerHTML = fileQueue.map((item, i) => `
+
+  qEl.innerHTML = fileQueue.map((item, i) => {
+    const typeLabel = item.detectedType ? `${DOC_TYPES[item.detectedType].emoji} ${DOC_TYPES[item.detectedType].label}` : '? Auto-detecting…';
+    const typeClass = item.detectedType ? `file-type-${item.detectedType}` : 'file-type-unknown';
+    return `
     <div class="file-item" id="fitem_${i}">
       <div class="file-item-icon">${item.file.type === 'application/pdf' ? '📄' : '🖼️'}</div>
       <div class="file-item-info">
         <div class="file-item-name">${esc(item.name)}</div>
         <div class="file-item-meta">${(item.size/1024).toFixed(1)} KB${item.pushed ? ' · <span style="color:var(--green)">pushed ✓</span>' : ''}</div>
       </div>
-      <span class="file-item-status ${item.status}">${statusLabel(item.status)}</span>
-      ${item.status === 'done' && sheetsConnected ? `<button class="btn-push-one" id="pushone_${i}" onclick="pushOneToSheets(${i})" title="Push to Sheets">📤</button>` : ''}
-      ${item.status !== 'processing' ? `<button class="btn-remove-file" onclick="removeFile(${i})">✕</button>` : ''}
-    </div>
-  `).join('');
+      <span class="file-item-type-badge ${typeClass}">${typeLabel}</span>
+      <span class="badge badge-${item.status}">${statusLabel(item.status)}</span>
+      ${item.status === 'done' && sheetsConnected ? `<button class="btn-push-one" id="pushone_${i}" onclick="pushOneToSheets(${i})">📤</button>` : ''}
+      ${item.status !== 'processing' ? `<button class="btn-remove" onclick="removeFile(${i})">✕</button>` : ''}
+    </div>`;
+  }).join('');
 }
 
-function statusLabel(s) {
-  return {pending:'⏳ Queued', processing:'⚡ Processing…', done:'✅ Done', error:'❌ Error'}[s] || s;
-}
+const statusLabel = s => ({ pending: '⏳ Queued', processing: '⚡ Processing', done: '✅ Done', error: '❌ Error', detecting: '🔍 Detecting' }[s] || s);
 
 function updateExtractBtn() {
   const hasFiles = isSample || fileQueue.length > 0;
   const hasKey = !!geminiKey;
-  const btn = document.getElementById('extractBtn');
-  btn.disabled = !(hasFiles && hasKey);
-  const count = fileQueue.filter(f=>f.status==='pending').length;
+  document.getElementById('extractBtn').disabled = !(hasFiles && hasKey);
+  const pending = fileQueue.filter(f => f.status === 'pending').length;
   document.getElementById('btnLabel').textContent = isSample
-    ? 'Extract sample'
-    : count > 1 ? `Extract ${count} files` : 'Extract & preview';
+    ? `Extract sample · ${DOC_TYPES[sampleType]?.label}`
+    : pending > 1 ? `Auto-detect & extract ${pending} files` : 'Auto-detect & extract';
 }
 
-/* ═══════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════
    SAMPLE
-═══════════════════════════════════════════════════ */
-function loadSample() {
+═══════════════════════════════════════════════════════ */
+function loadSample(type) {
   clearQueue();
   isSample = true;
+  sampleType = type;
+  const t = DOC_TYPES[type];
   document.getElementById('uploadZone').style.display = 'none';
   document.getElementById('fileQueue').innerHTML = `
     <div class="file-item">
-      <div class="file-item-icon">${DOC_TYPES[currentType].emoji}</div>
+      <div class="file-item-icon">${t.emoji}</div>
       <div class="file-item-info">
-        <div class="file-item-name">sample_${currentType}.txt</div>
+        <div class="file-item-name">sample_${type}.txt</div>
         <div class="file-item-meta">sample document</div>
       </div>
-      <span class="file-item-status pending">⏳ Ready</span>
-      <button class="btn-remove-file" onclick="clearQueue()">✕</button>
+      <span class="file-item-type-badge file-type-${type}">${t.emoji} ${t.label}</span>
+      <span class="badge badge-pending">⏳ Ready</span>
+      <button class="btn-remove" onclick="clearQueue()">✕</button>
     </div>`;
   updateExtractBtn();
   setStep(2);
 }
 
-/* ═══════════════════════════════════════════════════
-   EXTRACTION — BATCH
-═══════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   AUTO-DETECTION
+═══════════════════════════════════════════════════════ */
+async function detectDocType(item) {
+  // Build a lightweight detection call
+  const parts = [];
+  if (item.file.type.startsWith('image/')) {
+    parts.push({ inline_data: { mime_type: item.file.type, data: item.base64 } });
+    parts.push({ text: DETECT_PROMPT });
+  } else {
+    const fileUri = await uploadToGeminiFileAPI(item.base64, 'application/pdf', item.name);
+    parts.push({ file_data: { mime_type: 'application/pdf', file_uri: fileUri } });
+    parts.push({ text: DETECT_PROMPT });
+    item._fileUri = fileUri; // cache for reuse
+  }
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${geminiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts }], generationConfig: { temperature: 0, maxOutputTokens: 10 } })
+    }
+  );
+  if (!res.ok) throw new Error('Detection API error ' + res.status);
+  const resp = await res.json();
+  const raw = (resp.candidates?.[0]?.content?.parts?.[0]?.text || '').trim().toLowerCase();
+  return DOC_TYPES[raw] ? raw : 'invoice';
+}
+
+/* ═══════════════════════════════════════════════════════
+   EXTRACTION
+═══════════════════════════════════════════════════════ */
 async function extractAll() {
   hideMessages();
-  const btn = document.getElementById('extractBtn');
-  btn.disabled = true;
+  document.getElementById('extractBtn').disabled = true;
 
   if (isSample) {
-    await extractSingle(null, true);
+    await extractSingleSample(sampleType);
   } else {
     const pending = fileQueue.filter(f => f.status === 'pending');
-    if (!pending.length) { showError('No pending files to extract.'); btn.disabled = false; return; }
-
-    // Show batch progress in right panel if >1
-    if (pending.length > 1) showBatchProgress(pending);
-
+    if (!pending.length) { showError('No pending files.'); document.getElementById('extractBtn').disabled = false; return; }
+    if (pending.length > 1) showBatchProgress();
     for (let i = 0; i < fileQueue.length; i++) {
       const item = fileQueue[i];
       if (item.status !== 'pending') continue;
+
+      // Step 1: detect
+      item.status = 'detecting';
+      renderQueue();
+      updateBatchItem(i, 'detecting', '🔍 Detecting…');
+      try {
+        item.detectedType = await detectDocType(item);
+      } catch(e) {
+        item.detectedType = 'invoice'; // fallback
+      }
+      renderQueue();
+
+      // Step 2: extract
       item.status = 'processing';
       renderQueue();
-      updateBatchItem(i, 'processing');
+      updateBatchItem(i, 'processing', `⚡ Extracting ${DOC_TYPES[item.detectedType].label}…`);
       try {
-        const data = await callAPI(item);
+        item.data = await callExtractionAPI(item, item.detectedType);
         item.status = 'done';
-        item.data = data;
-        item.type = currentType;
         rowCount++;
-        allExtracted.push({ type: currentType, data, name: item.name });
-      } catch (e) {
+        allExtracted.push({ type: item.detectedType, data: item.data, name: item.name });
+      } catch(e) {
         item.status = 'error';
         item.error = e.message;
       }
       renderQueue();
-      updateBatchItem(i, item.status);
+      updateBatchItem(i, item.status, item.status === 'done' ? `✅ ${DOC_TYPES[item.detectedType].label}` : '❌ Error');
     }
     renderResults();
   }
 
   updateExtractBtn();
   setStep(3);
-  document.getElementById('sheetsRowCount').textContent = `${rowCount} row${rowCount!==1?'s':''} extracted`;
+  updatePanelSub();
 
-  const doneCount = fileQueue.filter(f=>f.status==='done').length;
-  const errCount = fileQueue.filter(f=>f.status==='error').length;
-  if (doneCount > 0) showSuccess(`✅ ${doneCount} file${doneCount>1?'s':''} extracted!${errCount>0?' '+errCount+' failed.':''}`);
-  if (errCount > 0 && doneCount === 0) showError(`❌ All ${errCount} files failed. Check your API key and file types.`);
+  const doneCount = isSample ? 1 : fileQueue.filter(f => f.status === 'done').length;
+  const errCount = isSample ? 0 : fileQueue.filter(f => f.status === 'error').length;
+  if (doneCount > 0) showSuccess(`✅ ${doneCount} document${doneCount > 1 ? 's' : ''} extracted!${errCount > 0 ? ` ${errCount} failed.` : ''}`);
+  if (errCount > 0 && !doneCount) showError(`❌ Extraction failed. Check your API key and file types.`);
 }
 
-async function extractSingle(item, sample) {
+async function extractSingleSample(type) {
   const sp = document.createElement('div'); sp.className = 'spinner';
   document.getElementById('extractBtn').appendChild(sp);
   document.getElementById('btnLabel').textContent = 'Extracting…';
   try {
-    const data = await callAPI(item);
+    const t = DOC_TYPES[type];
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${geminiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: t.prompt + '\n\nDocument:\n' + t.sampleText }] }],
+          generationConfig: { temperature: 0, maxOutputTokens: 2000 }
+        })
+      }
+    );
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      let msg = e.error?.message || ('API error ' + res.status);
+      if (res.status === 403) msg = 'API key invalid or no permission.';
+      if (res.status === 429) msg = 'Rate limit — try again shortly.';
+      throw new Error(msg);
+    }
+    const resp = await res.json();
+    const text = resp.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (!text) throw new Error('Empty response from Gemini.');
+    const clean = text.replace(/```json|```/g, '').trim();
+    const data = JSON.parse(clean);
     rowCount++;
-    allExtracted.push({ type: currentType, data, name: sample ? 'sample' : item.name });
-    renderSingleResult(data, currentType, allExtracted.length - 1);
-  } catch (e) {
+    allExtracted.push({ type, data, name: `sample_${type}` });
+    renderSingleResult(data, type, allExtracted.length - 1);
+  } catch(e) {
     showError('Extraction failed: ' + e.message);
   } finally {
     document.getElementById('extractBtn').removeChild(sp);
     document.getElementById('btnLabel').textContent = 'Extract another';
-    document.getElementById('extractBtn').onclick = () => { clearQueue(); isSample=false; document.getElementById('uploadZone').style.display=''; updateExtractBtn(); document.getElementById('extractBtn').onclick=extractAll; };
+    document.getElementById('extractBtn').onclick = () => {
+      clearQueue();
+      document.getElementById('uploadZone').style.display = '';
+      updateExtractBtn();
+      document.getElementById('extractBtn').onclick = extractAll;
+    };
     document.getElementById('extractBtn').disabled = false;
+    updatePanelSub();
   }
 }
 
-/* ═══════════════════════════════════════════════════
-   API CALL
-═══════════════════════════════════════════════════ */
-async function callAPI(item) {
-  const t = DOC_TYPES[currentType];
-  if (!geminiKey) throw new Error('Please save your Gemini API key first.');
-
+/* ═══════════════════════════════════════════════════════
+   EXTRACTION API CALL (after type is known)
+═══════════════════════════════════════════════════════ */
+async function callExtractionAPI(item, typeKey) {
+  if (!geminiKey) throw new Error('No Gemini API key.');
+  const t = DOC_TYPES[typeKey];
   const parts = [];
 
-  if (isSample) {
-    parts.push({ text: t.prompt + '\n\nDocument:\n' + t.sampleText });
-  } else if (item.file.type.startsWith('image/')) {
+  if (item.file.type.startsWith('image/')) {
     parts.push({ inline_data: { mime_type: item.file.type, data: item.base64 } });
     parts.push({ text: t.prompt });
   } else {
-    const fileUri = await uploadToGeminiFileAPI(item.base64, 'application/pdf', item.name);
+    // Reuse uploaded URI if available
+    const fileUri = item._fileUri || await uploadToGeminiFileAPI(item.base64, 'application/pdf', item.name);
     parts.push({ file_data: { mime_type: 'application/pdf', file_uri: fileUri } });
     parts.push({ text: t.prompt });
   }
@@ -878,25 +1449,22 @@ async function callAPI(item) {
   if (!res.ok) {
     let msg = 'Gemini API error ' + res.status;
     try { const e = await res.json(); msg = e.error?.message || msg; } catch(e) {}
-    if (res.status === 403) msg = 'API key is invalid or has no permission to use Gemini.';
-    if (res.status === 429) msg = 'Rate limit hit — wait a moment and try again.';
+    if (res.status === 403) msg = 'API key is invalid.';
+    if (res.status === 429) msg = 'Rate limit — wait a moment.';
     throw new Error(msg);
   }
 
   const resp = await res.json();
   const text = resp.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  if (!text) throw new Error('Gemini returned an empty response.');
-  const clean = text.replace(/```json[\s\S]*?```|```[\s\S]*?```/g, m => m.replace(/```json|```/g,'')).replace(/```/g,'').trim();
-  try {
-    return JSON.parse(clean);
-  } catch(e) {
-    throw new Error('Could not parse Gemini response as JSON. Try a clearer document.');
-  }
+  if (!text) throw new Error('Empty response from Gemini.');
+  const clean = text.replace(/```json|```/g, '').trim();
+  try { return JSON.parse(clean); }
+  catch(e) { throw new Error('Could not parse Gemini response as JSON.'); }
 }
 
-/* ═══════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════
    GEMINI FILE UPLOAD
-═══════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════ */
 async function uploadToGeminiFileAPI(base64Data, mimeType, displayName) {
   const initRes = await fetch(
     `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${geminiKey}`,
@@ -913,11 +1481,11 @@ async function uploadToGeminiFileAPI(base64Data, mimeType, displayName) {
     }
   );
   if (!initRes.ok) {
-    const e = await initRes.json().catch(()=>({error:{message:'Upload init failed'}}));
-    throw new Error('File upload failed: ' + (e.error?.message || initRes.status));
+    const e = await initRes.json().catch(() => ({}));
+    throw new Error('File upload init failed: ' + (e.error?.message || initRes.status));
   }
   const uploadUrl = initRes.headers.get('X-Goog-Upload-URL');
-  if (!uploadUrl) throw new Error('No upload URL returned from Gemini File API.');
+  if (!uploadUrl) throw new Error('No upload URL from Gemini File API.');
   const binary = atob(base64Data);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
@@ -926,80 +1494,94 @@ async function uploadToGeminiFileAPI(base64Data, mimeType, displayName) {
     headers: { 'Content-Length': bytes.length, 'X-Goog-Upload-Offset': '0', 'X-Goog-Upload-Command': 'upload, finalize' },
     body: bytes
   });
-  if (!uploadRes.ok) throw new Error('File upload to Gemini failed: ' + uploadRes.status);
+  if (!uploadRes.ok) throw new Error('File upload failed: ' + uploadRes.status);
   const fileInfo = await uploadRes.json();
   return fileInfo.file?.uri || fileInfo.uri;
 }
 
-/* ═══════════════════════════════════════════════════
-   RENDER — MULTI-FILE TABS
-═══════════════════════════════════════════════════ */
-function showBatchProgress(items) {
+/* ═══════════════════════════════════════════════════════
+   RENDER
+═══════════════════════════════════════════════════════ */
+function showBatchProgress() {
+  const pending = fileQueue.filter(f => f.status === 'pending');
   document.getElementById('mainContent').innerHTML = `
-    <div class="batch-progress">
-      <div class="batch-header">🔄 Processing ${items.length} files…</div>
-      ${items.map((item,i) => `
-        <div class="batch-item" id="batch_${i}">
-          <span style="font-size:14px">${item.file.type==='application/pdf'?'📄':'🖼️'}</span>
-          <div class="batch-item-name">${esc(item.name)}</div>
-          <span class="batch-item-status pending" id="bstatus_${i}">⏳ Queued</span>
-        </div>
-      `).join('')}
+    <div class="batch-card">
+      <div class="batch-card-header">🔄 Processing ${pending.length} files</div>
+      ${fileQueue.map((item, i) => `
+        <div class="batch-file-row" id="batch_${i}">
+          <span style="font-size:14px">${item.file.type === 'application/pdf' ? '📄' : '🖼️'}</span>
+          <div class="batch-file-name">${esc(item.name)}</div>
+          <span class="badge badge-pending" id="bstatus_${i}">⏳ Queued</span>
+        </div>`).join('')}
     </div>`;
 }
 
-function updateBatchItem(idx, status) {
-  const el = document.getElementById('bstatus_'+idx);
-  if (el) { el.className = 'batch-item-status ' + status; el.textContent = statusLabel(status); }
+function updateBatchItem(idx, statusKey, label) {
+  const el = document.getElementById('bstatus_' + idx);
+  if (el) { el.className = 'badge badge-' + statusKey; el.textContent = label || statusLabel(statusKey); }
 }
 
 function renderResults() {
   const done = allExtracted.filter(e => e.data);
   if (!done.length) return;
-
-  // Build tabs if >1
   if (done.length > 1) {
     const tabsEl = document.getElementById('resultTabs');
     tabsEl.style.display = 'flex';
-    tabsEl.innerHTML = done.map((e,i) => `<button class="result-tab ${i===done.length-1?'active':''}" onclick="showResultTab(${i})">${esc(e.name.length>20?e.name.slice(0,18)+'…':e.name)}</button>`).join('');
+    tabsEl.innerHTML = done.map((e, i) => {
+      const t = DOC_TYPES[e.type];
+      const shortName = e.name.length > 18 ? e.name.slice(0, 16) + '…' : e.name;
+      return `<button class="result-tab ${i === done.length - 1 ? 'active' : ''}" onclick="showResultTab(${i})">${t.emoji} ${esc(shortName)}</button>`;
+    }).join('');
   }
   showResultTab(done.length - 1);
 }
 
 function showResultTab(idx) {
   activeResultIdx = idx;
-  document.querySelectorAll('.result-tab').forEach((t,i)=>{t.classList.toggle('active',i===idx);});
-  const e = allExtracted.filter(e=>e.data)[idx];
-  if (e) renderSingleResult(e.data, e.type, idx);
+  document.querySelectorAll('.result-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  const entry = allExtracted.filter(e => e.data)[idx];
+  if (entry) renderSingleResult(entry.data, entry.type, idx);
 }
 
 function renderSingleResult(d, typeKey, idx) {
   const t = DOC_TYPES[typeKey];
   const sheetRows = t.toSheetRow(d);
   const firstRow = Array.isArray(sheetRows[0]) ? sheetRows[0] : sheetRows;
-  const displayVals = firstRow.map(v => v===null||v===undefined ? '—' : String(v));
+  const displayVals = firstRow.map(v => v == null ? '—' : String(v));
+  const extraRows = Array.isArray(sheetRows[0]) ? sheetRows.length - 1 : 0;
 
   document.getElementById('mainContent').innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:14px">
+    <div class="result-wrap">
+      <div class="doc-type-banner" style="border-color:${t.bannerBorder};background:${t.bannerBg}">
+        <div class="doc-type-icon">${t.emoji}</div>
+        <div>
+          <div class="doc-type-label">${t.label} detected</div>
+          <div class="doc-type-sub">AI auto-identified · ${t.csvCols.length} fields extracted</div>
+        </div>
+      </div>
       <div class="fields-grid">${t.renderCards(d)}</div>
       ${t.renderLineItems(d)}
-      <div class="sheet-row-preview">
-        <div class="sheet-row-label">
-          Spreadsheet row preview — ${t.emoji} ${t.label} columns
-          <span class="badge">ROW #${rowCount}</span>
+      <div class="sheet-preview">
+        <div class="sheet-preview-header">
+          📊 Spreadsheet row preview
+          <span class="row-badge">ROW #${rowCount}</span>
         </div>
-        <div class="sheet-cols">${t.csvCols.map(c=>`<div class="sheet-col-header">${esc(c)}</div>`).join('')}</div>
-        <div class="sheet-row-data">${displayVals.map(v=>`<div class="sheet-cell new">${esc(v)}</div>`).join('')}</div>
+        <div class="sheet-scroll">
+          <div class="sheet-header-row">${t.csvCols.map(c => `<div class="sheet-th">${esc(c)}</div>`).join('')}</div>
+          <div class="sheet-data-row">${displayVals.map(v => `<div class="sheet-td">${esc(v)}</div>`).join('')}</div>
+        </div>
+        ${extraRows > 0 ? `<div class="multi-rows-note">+ ${extraRows} more row${extraRows > 1 ? 's' : ''} (${sheetRows.length} total for this document)</div>` : ''}
       </div>
       <div class="action-row">
-        <button class="action-btn copy" onclick="copyRowCSV()">📋 Copy CSV</button>
-        <button class="action-btn download" onclick="downloadCSV()">⬇ Download CSV (${rowCount})</button>
-        <button class="action-btn push" id="pushBtn" onclick="pushCurrentToSheets()" ${sheetsConnected?'':'disabled'}>
-          ${sheetsConnected?'📤 Push This':'🔗 Connect Sheets first'}
+        <button class="action-btn action-copy" onclick="copyRowCSV()">📋 Copy CSV</button>
+        <button class="action-btn action-download" onclick="downloadCSV()">⬇ Download CSV (${rowCount})</button>
+        <button class="action-btn action-push" id="pushBtn" onclick="pushCurrentToSheets()" ${sheetsConnected ? '' : 'disabled'}>
+          ${sheetsConnected ? '📤 Push to Sheets' : '🔗 Connect Sheets first'}
         </button>
-        ${sheetsConnected && allExtracted.filter(e=>e.data).length > 1 ? `<button class="action-btn push-all" id="pushAllBtn" onclick="pushAllToSheets()">📤 Push All (${allExtracted.filter(e=>e.data).length})</button>` : ''}
+        ${sheetsConnected && allExtracted.filter(e => e.data).length > 1
+          ? `<button class="action-btn action-push-all" id="pushAllBtn" onclick="pushAllToSheets()">📤 Push All (${allExtracted.filter(e => e.data).length})</button>` : ''}
       </div>
-      ${!sheetsConnected?`<div style="font-size:12px;color:var(--text3);text-align:center">Connect Google Sheets on the left to enable direct push ↑</div>`:''}
+      ${!sheetsConnected ? `<div style="font-size:11px;color:var(--text3);text-align:center">Connect Google Sheets on the left to enable direct push</div>` : ''}
     </div>`;
 
   window._lastDisplayVals = displayVals;
@@ -1007,32 +1589,35 @@ function renderSingleResult(d, typeKey, idx) {
   window._lastExtracted = { type: typeKey, data: d };
 }
 
-/* ═══════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════
    ACTIONS
-═══════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════ */
 function copyRowCSV() {
   if (!window._lastSheetCols) return;
-  const header = window._lastSheetCols.map(c=>`"${c}"`).join(',');
-  const row = window._lastDisplayVals.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',');
-  navigator.clipboard.writeText(header+'\n'+row).then(()=>showSuccess('✅ Row copied to clipboard as CSV!'));
+  const header = window._lastSheetCols.map(c => `"${c}"`).join(',');
+  const row = window._lastDisplayVals.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+  navigator.clipboard.writeText(header + '\n' + row)
+    .then(() => showSuccess('✅ Row copied to clipboard as CSV!'));
 }
 
 function downloadCSV() {
   if (!allExtracted.length) return;
-  const typeKey = allExtracted[allExtracted.length-1].type;
+  const typeKey = allExtracted[allExtracted.length - 1].type;
   const t = DOC_TYPES[typeKey];
-  const header = t.csvCols.map(c=>`"${c}"`).join(',');
+  const header = t.csvCols.map(c => `"${c}"`).join(',');
   const rows = [];
-  allExtracted.forEach(({type,data})=>{
+  allExtracted.forEach(({ type, data }) => {
     const schema = DOC_TYPES[type];
     const raw = schema.toCSVRow(data);
     const arr = Array.isArray(raw[0]) ? raw : [raw];
-    arr.forEach(r => rows.push(r.map(v=>`"${String(v==null?'':v).replace(/"/g,'""')}"`).join(',')));
+    arr.forEach(r => rows.push(r.map(v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`).join(',')));
   });
-  const blob = new Blob([[header,...rows].join('\n')], {type:'text/csv;charset=utf-8;'});
+  const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download=`${typeKey}_${new Date().toISOString().slice(0,10)}.csv`;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  const a = document.createElement('a');
+  a.href = url; a.download = `smartdoc_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
 }
 
 async function pushCurrentToSheets() {
@@ -1042,36 +1627,35 @@ async function pushCurrentToSheets() {
   try {
     await doPushRows(window._lastExtracted.type, window._lastExtracted.data);
     btn.textContent = '✅ Pushed!';
-    showSuccess(`✅ Pushed to Google Sheets!`);
-    setTimeout(()=>{ btn.disabled=false; btn.textContent='📤 Push This'; }, 2500);
+    showSuccess('✅ Pushed to Google Sheets!');
+    setTimeout(() => { btn.disabled = false; btn.textContent = '📤 Push to Sheets'; }, 2500);
   } catch(e) {
-    btn.disabled = false; btn.textContent = '📤 Push This';
-    showError('Push failed: ' + e.message + '. Make sure your Apps Script Web App is deployed as "Anyone can access".');
+    btn.disabled = false; btn.textContent = '📤 Push to Sheets';
+    showError('Push failed: ' + e.message + '. Ensure Apps Script is deployed as "Anyone can access".');
   }
 }
 
-/* ═══════════════════════════════════════════════════
-   PUSH ONE (from file queue button)
-═══════════════════════════════════════════════════ */
 async function pushOneToSheets(fileIdx) {
   const item = fileQueue[fileIdx];
-  if (!item || !item.data || !sheetsConnected) return;
+  if (!item?.data || !sheetsConnected) return;
   const btn = document.getElementById('pushone_' + fileIdx);
   if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
   try {
-    await doPushRows(item.type || currentType, item.data);
+    await doPushRows(item.detectedType || 'invoice', item.data);
     item.pushed = true;
-    if (btn) { btn.textContent = '✅'; btn.style.background = 'var(--green-light)'; btn.style.borderColor = 'var(--green)'; btn.style.color = 'var(--green)'; }
-    showSuccess(`✅ "${item.name}" pushed to Sheets!`);
+    if (btn) {
+      btn.textContent = '✅';
+      btn.style.background = 'var(--green-light)';
+      btn.style.borderColor = 'var(--green)';
+      btn.style.color = 'var(--green)';
+    }
+    showSuccess(`✅ "${item.name}" pushed!`);
   } catch(e) {
     if (btn) { btn.disabled = false; btn.textContent = '📤'; }
     showError('Push failed: ' + e.message);
   }
 }
 
-/* ═══════════════════════════════════════════════════
-   PUSH ALL (all extracted files at once)
-═══════════════════════════════════════════════════ */
 async function pushAllToSheets() {
   if (!sheetsConnected) return;
   const eligible = allExtracted.filter(e => e.data);
@@ -1080,25 +1664,14 @@ async function pushAllToSheets() {
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Pushing all…'; }
   let pushed = 0, failed = 0;
   for (const entry of eligible) {
-    try {
-      await doPushRows(entry.type, entry.data);
-      pushed++;
-      // Mark in queue too
-      const qi = fileQueue.findIndex(f => f.name === entry.name);
-      if (qi >= 0) fileQueue[qi].pushed = true;
-    } catch(e) {
-      failed++;
-    }
+    try { await doPushRows(entry.type, entry.data); pushed++; }
+    catch(e) { failed++; }
   }
-  renderQueue();
   if (btn) { btn.disabled = false; btn.textContent = `📤 Push All (${eligible.length})`; }
-  if (pushed > 0) showSuccess(`✅ ${pushed} file${pushed>1?'s':''} pushed to Sheets!${failed>0?' '+failed+' failed.':''}`);
-  else showError(`❌ All pushes failed. Check your Apps Script URL.`);
+  if (pushed > 0) showSuccess(`✅ ${pushed} pushed!${failed > 0 ? ` ${failed} failed.` : ''}`);
+  else showError('❌ All pushes failed. Check your Apps Script URL.');
 }
 
-/* ═══════════════════════════════════════════════════
-   SHARED PUSH HELPER
-═══════════════════════════════════════════════════ */
 async function doPushRows(typeKey, data) {
   const schema = DOC_TYPES[typeKey];
   let rows = schema.toSheetRow(data);
@@ -1113,46 +1686,70 @@ async function doPushRows(typeKey, data) {
   const text = await res.text();
   let ok = false;
   try { ok = JSON.parse(text).ok; } catch(e) { ok = res.ok; }
-  if (!ok && !res.ok) throw new Error('Apps Script returned error: ' + text.slice(0,200));
+  if (!ok && !res.ok) throw new Error('Apps Script error: ' + text.slice(0, 200));
   const dataCount = rows.length - (sheetsRowsPushed === 0 ? 1 : 0);
   sheetsRowsPushed += dataCount;
-  document.getElementById('connectedRowsSent').textContent = `${sheetsRowsPushed} row${sheetsRowsPushed>1?'s':''} pushed`;
+  document.getElementById('connectedRowsSent').textContent = `${sheetsRowsPushed} row${sheetsRowsPushed > 1 ? 's' : ''} pushed`;
 }
 
-/* ═══════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════
    UTILITIES
-═══════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════ */
 function setStep(n) {
-  ['step1','step2','step3'].forEach((id,i) => {
-    const el = document.getElementById(id); el.className='step';
-    if (i+1 < n) el.classList.add('done');
-    else if (i+1 === n) el.classList.add('active');
+  ['step1', 'step2', 'step3'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.className = 'step';
+    if (i + 1 < n) el.classList.add('done');
+    else if (i + 1 === n) el.classList.add('active');
   });
 }
-function fmt(n) { if(n==null||n==='') return '—'; return '$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function esc(s) { return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function showError(msg) { const b=document.getElementById('errorBox');b.textContent=msg;b.classList.add('visible');document.getElementById('successBox').classList.remove('visible'); }
-function showSuccess(msg) { const b=document.getElementById('successBox');b.textContent=msg;b.classList.add('visible');document.getElementById('errorBox').classList.remove('visible'); }
-function hideMessages() { document.getElementById('errorBox').classList.remove('visible');document.getElementById('successBox').classList.remove('visible'); }
 
+function updatePanelSub() {
+  document.getElementById('panelSub').textContent = `${rowCount} row${rowCount !== 1 ? 's' : ''} extracted`;
+}
 
-/* ═══════════════════════════════════════════════════
-   SUPABASE AUTH + SETTINGS
-═══════════════════════════════════════════════════ */
+function fmt(n) {
+  if (n == null || n === '') return '—';
+  return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function showError(msg) {
+  const b = document.getElementById('errorBox');
+  b.textContent = msg; b.classList.add('visible');
+  document.getElementById('successBox').classList.remove('visible');
+}
+
+function showSuccess(msg) {
+  const b = document.getElementById('successBox');
+  b.textContent = msg; b.classList.add('visible');
+  document.getElementById('errorBox').classList.remove('visible');
+}
+
+function hideMessages() {
+  document.getElementById('errorBox').classList.remove('visible');
+  document.getElementById('successBox').classList.remove('visible');
+}
+
+/* ═══════════════════════════════════════════════════════
+   SUPABASE AUTH
+═══════════════════════════════════════════════════════ */
 const SUPA_URL = 'https://bnsbfaswyxocgedpmjjd.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJuc2JmYXN3eXhvY2dlZHBtampkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNzU3ODUsImV4cCI6MjA5NDc1MTc4NX0.e51S8ltz0kBZDX0-uYkV6eU9mu5Jz78FBQE948dm7yo';
 const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
 let currentUser = null;
-let authMode = 'signin'; // 'signin' | 'signup'
+let authMode = 'signin';
 
-/* ── Boot: check session ── */
 async function bootAuth() {
   const { data: { session } } = await supa.auth.getSession();
-  if (session?.user) {
-    onLoggedIn(session.user);
-  }
-  // Listen for auth changes
+  if (session?.user) onLoggedIn(session.user);
   supa.auth.onAuthStateChange((_event, session) => {
     if (session?.user) onLoggedIn(session.user);
     else onLoggedOut();
@@ -1163,12 +1760,10 @@ function onLoggedIn(user) {
   currentUser = user;
   document.getElementById('authOverlay').style.display = 'none';
   document.getElementById('appShell').style.display = 'block';
-  // Show user pill
   const email = user.email || '';
   document.getElementById('userPill').style.display = 'flex';
   document.getElementById('userAvatar').textContent = email.charAt(0).toUpperCase();
   document.getElementById('userEmailLabel').textContent = email;
-  // Load saved settings
   loadUserSettings();
 }
 
@@ -1179,19 +1774,15 @@ function onLoggedOut() {
   document.getElementById('userPill').style.display = 'none';
 }
 
-/* ── Sign in / Sign up ── */
 async function handleAuth() {
   const email = document.getElementById('authEmail').value.trim();
   const password = document.getElementById('authPassword').value;
   const btn = document.getElementById('authBtn');
-  const errEl = document.getElementById('authErr');
-  const okEl = document.getElementById('authOk');
-  errEl.classList.remove('visible'); okEl.classList.remove('visible');
-
+  document.getElementById('authErr').classList.remove('visible');
+  document.getElementById('authOk').classList.remove('visible');
   if (!email || !password) { showAuthErr('Please enter email and password.'); return; }
   btn.disabled = true;
   btn.textContent = authMode === 'signin' ? 'Signing in…' : 'Creating account…';
-
   try {
     if (authMode === 'signin') {
       const { error } = await supa.auth.signInWithPassword({ email, password });
@@ -1200,6 +1791,7 @@ async function handleAuth() {
       const name = document.getElementById('authName').value.trim();
       const { error } = await supa.auth.signUp({ email, password, options: { data: { full_name: name } } });
       if (error) throw error;
+      const okEl = document.getElementById('authOk');
       okEl.textContent = '✅ Account created! Check your email to confirm, then sign in.';
       okEl.classList.add('visible');
       btn.disabled = false; btn.textContent = 'Sign up';
@@ -1221,7 +1813,7 @@ function toggleAuthMode() {
   authMode = authMode === 'signin' ? 'signup' : 'signin';
   const isSignup = authMode === 'signup';
   document.getElementById('authTitle').textContent = isSignup ? 'Create account' : 'Sign in';
-  document.getElementById('authSub').textContent = isSignup ? 'Sign up to save your settings across devices' : 'Welcome back — sign in to your account';
+  document.getElementById('authSub').textContent = isSignup ? 'Sign up to save settings across devices' : 'Welcome back — continue to your workspace';
   document.getElementById('authBtn').textContent = isSignup ? 'Sign up' : 'Sign in';
   document.getElementById('authToggle').innerHTML = isSignup
     ? 'Already have an account? <a onclick="toggleAuthMode()">Sign in</a>'
@@ -1233,15 +1825,17 @@ function toggleAuthMode() {
 
 async function signOut() {
   await supa.auth.signOut();
-  geminiKey = null; appsScriptUrl = null; sheetsSpreadsheetId = null; sheetsConnected = false;
+  geminiKey = null; appsScriptUrl = null; sheetsSpreadsheetId = null;
+  sheetsConnected = false;
   clearQueue();
 }
 
-/* ── Save / Load user settings ── */
+/* ═══════════════════════════════════════════════════════
+   USER SETTINGS (Supabase persistence)
+═══════════════════════════════════════════════════════ */
 async function saveUserSettings() {
   if (!currentUser) return;
-  // Check if row exists for this user
-  const { data: existing } = await supa.from('invoice_bot_users').select('id').eq('user_id', currentUser.id).single();
+  const { data: existing } = await supa.from('invoice_bot_users').select('user_id').eq('user_id', currentUser.id).single();
   const settings = {
     user_id: currentUser.id,
     gemini_key: geminiKey || '',
@@ -1250,11 +1844,8 @@ async function saveUserSettings() {
     sheet_name: sheetsSheetName || 'Sheet1',
     updated_at: new Date().toISOString()
   };
-  if (existing) {
-    await supa.from('invoice_bot_users').update(settings).eq('user_id', currentUser.id);
-  } else {
-    await supa.from('invoice_bot_users').insert(settings);
-  }
+  if (existing) await supa.from('invoice_bot_users').update(settings).eq('user_id', currentUser.id);
+  else await supa.from('invoice_bot_users').insert(settings);
 }
 
 async function loadUserSettings() {
@@ -1262,18 +1853,16 @@ async function loadUserSettings() {
   const { data, error } = await supa.from('invoice_bot_users').select('*').eq('user_id', currentUser.id).single();
   if (error || !data) return;
 
-  // Restore Gemini key
   if (data.gemini_key) {
     geminiKey = data.gemini_key;
     document.getElementById('geminiKeyInput').value = data.gemini_key;
     document.getElementById('geminiForm').style.display = 'none';
     document.getElementById('geminiConnectedInfo').style.display = 'flex';
-    document.getElementById('geminiStatus').className = 'connect-status connected';
-    document.getElementById('geminiStatus').textContent = 'Key saved ✓';
+    document.getElementById('geminiStatus').className = 'badge badge-connected';
+    document.getElementById('geminiStatus').textContent = 'Active ✓';
     updateExtractBtn();
   }
 
-  // Restore Sheets settings
   if (data.apps_script_url && data.sheet_id) {
     appsScriptUrl = data.apps_script_url;
     sheetsSpreadsheetId = data.sheet_id;
@@ -1282,24 +1871,22 @@ async function loadUserSettings() {
     document.getElementById('appsScriptUrl').value = data.apps_script_url;
     document.getElementById('sheetIdInput').value = data.sheet_id;
     document.getElementById('sheetNameInput').value = sheetsSheetName;
-    document.getElementById('connectStatus').className = 'connect-status connected';
+    document.getElementById('connectStatus').className = 'badge badge-connected';
     document.getElementById('connectStatus').textContent = 'Connected ✓';
     document.getElementById('connectForm').style.display = 'none';
     document.getElementById('connectedInfo').style.display = 'flex';
-    document.getElementById('connectedSheetId').textContent = `📊 ${data.sheet_id.slice(0,24)}… / ${sheetsSheetName}`;
+    document.getElementById('connectedSheetId').textContent = `📊 ${data.sheet_id.slice(0, 28)}… / ${sheetsSheetName}`;
   }
 }
 
-/* Allow Enter key on auth inputs */
+/* Allow Enter on auth form */
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.getElementById('authOverlay').style.display !== 'none') {
     handleAuth();
   }
 });
 
-
 bootAuth();
-init();
 </script>
 </div><!-- /appShell -->
 </body>
